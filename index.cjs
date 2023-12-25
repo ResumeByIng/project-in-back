@@ -21,7 +21,7 @@ const db = createConnection({
 
 
 app.get('/api/data', (req, res) => {
-  const sql = 'SELECT * FROM username'; //แก้
+  const sql = 'SELECT * FROM username';
   db.query(sql, (err, result) => {
     if (err) {
       console.error('Error querying MySQL:', err);
@@ -39,20 +39,19 @@ db.connect((err) => {
   console.log('Connected to MySQL Database!');
 });
 
-app.post("/project", (req, res) => {
+app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-  db.query("SELECT * FROM username WHERE email = ? AND password = ? ",
+  db.query("SELECT * FROM username WHERE email = ? AND password = ?",
     [email, password],
     (err, result) => {
       if (err) {
-        res.send({ err: err });
+        res.status(500).send({ err: err.message });
       }
       if (result.length > 0) {
-        res.send(result);
-      }
-      else {
-        res.send({ message: "id/pass ไม่ถูกต้อง" });
+        res.status(200).send(result);
+      } else {
+        res.status(401).send({ message: "id/pass ไม่ถูกต้อง" });
       }
     });
 });
@@ -263,6 +262,3 @@ app.listen(3001, () => {
   console.log("Yey, your server is running on port 3001");
 });
 module.exports = app;
-
-
-
