@@ -75,9 +75,9 @@ app.get('/api/getpass', (req, res) => {
 });
 
 app.get('/api/gettqf7', (req, res) => {
-  const idTQF = req.query.idTQF; // รับชื่อเทมเพลตจากคำขอ
+  const id = req.query.id; // รับชื่อเทมเพลตจากคำขอ
   const query = `SELECT nme_file_tqf FROM file_tqf7 WHERE id = ?`;
-  db.query(query, [idTQF], (error, results) => {
+  db.query(query, [id], (error, results) => {
     if (error) {
       console.error('Error fetching template from database:', error);
       res.status(500).json({ message: 'Error fetching template from database' });
