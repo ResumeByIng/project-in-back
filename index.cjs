@@ -74,9 +74,9 @@ app.get('/api/getpass', (req, res) => {
   });
 });
 
-app.get('/api/getTemplate', (req, res) => {
+app.get('/api/gettqf7', (req, res) => {
   const idTQF = req.query.idTQF; // รับชื่อเทมเพลตจากคำขอ
-  const query = `SELECT template_file FROM template WHERE id_TQF = ?`;
+  const query = `SELECT nme_file_tqf FROM file_tqf7 WHERE id = ?`;
   db.query(query, [idTQF], (error, results) => {
     if (error) {
       console.error('Error fetching template from database:', error);
