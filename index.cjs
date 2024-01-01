@@ -73,23 +73,29 @@ app.get('/api/getpass', (req, res) => {
     }
   });
 });
-
 app.get('/api/gettqf7', (req, res) => {
-  const id = req.query.id; // รับชื่อเทมเพลตจากคำขอ
-  const query = `SELECT file_tqf7 FROM name_file_tqf WHERE id = ?`;
+  const id = req.query.id;
+
+  // ใช้คำสั่ง SQL เพื่อดึงข้อมูลจากฐานข้อมูล
+  const query = 'SELECT id, name_file_tqf FROM file_tqf7 WHERE id = ?';
+  
   db.query(query, [id], (error, results) => {
     if (error) {
       console.error('Error fetching template from database:', error);
       res.status(500).json({ message: 'Error fetching template from database' });
     } else {
-
-      const templateFile = results[0].template_file;
-      res.setHeader('Content-Disposition', `attachment; filename="template.docx"`);
-      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-      res.send(templateFile);
+      if (results.length > 0) {
+        const templateFile = results[0].name_file_tqf;
+        res.setHeader('Content-Disposition', `attachment; filename="template.docx"`);
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+        res.send(templateFile);
+      } else {
+        res.status(404).json({ message: 'Template not found' });
+      }
     }
   });
 });
+
 app.post('/api/updateStatusTQF', (req, res) => {
   const courseCode = req.body.courseCode; // รับ courseCode จากคำขอ POST
   const query = `UPDATE tqf SET status_tqf = NOW() WHERE course_code = ?`;
