@@ -42,18 +42,32 @@ db.connect((err) => {
 app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-  db.query("SELECT * FROM username WHERE email = ? AND password = ?",
+  
+  db.query(
+    "SELECT u.id AS user_id, u.email, u.password, u.role, " +
+    "p.user_id AS professor_user_id, p.first_name AS professor_first_name, p.last_name AS professor_last_name, " +
+    "p.faculty AS professor_faculty, p.branch AS professor_branch, p.position AS professor_position, " +
+    "p.qualification AS professor_qualification, p.gender AS professor_gender, " +
+    "s.user_id AS student_user_id, s.first_name AS student_first_name, s.last_name AS student_last_name, " +
+    "s.id_student AS student_id_student, s.faculty AS student_faculty, s.branch AS student_branch, " +
+    "s.class_year AS student_class_year, s.gender AS student_gender " +
+    "FROM username u " +
+    "LEFT JOIN data_professor p ON u.id = p.user_id " +
+    "LEFT JOIN data_student s ON u.id = s.user_id " +
+    "WHERE u.email = ? AND u.password = ?",
     [email, password],
     (err, result) => {
       if (err) {
-        res.status(500).send({ err: err.message });
+        return res.status(500).send({ err: err.message });
       }
+
       if (result.length > 0) {
-        res.status(200).send(result);
+        return res.status(200).send(result);
       } else {
-        res.status(401).send({ message: "id/pass ไม่ถูกต้อง" });
+        return res.status(401).send({ message: "id/pass ไม่ถูกต้อง" });
       }
-    });
+    }
+  );
 });
 
 
