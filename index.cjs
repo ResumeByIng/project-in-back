@@ -158,15 +158,15 @@ app.post('/api/reset-date', (req, res) => {
 });
 
 app.post('/api/create-news', (req, res) => {
-  const { title, content, date_created } = req.body;
+  const { title, content, date_created, author } = req.body;
 
   const query = `
-    INSERT INTO data_news (title, content, date_created)
-    VALUES (?, ?, ?)
+    INSERT INTO data_news (title, content, date_created, author)
+    VALUES (?, ?, ?, ?)
   `;
 
   // Query to insert new news
-  db.query(query, [title, content, date_created], (error, results) => {
+  db.query(query, [title, content, date_created, author], (error, results) => {
     if (error) {
       console.error('Error creating news:', error);
       res.status(500).json({ message: 'Error creating news' });
@@ -176,7 +176,6 @@ app.post('/api/create-news', (req, res) => {
     }
   });
 });
-
 
 const userSecrets = [];
 app.post('/generate-otp', (req, res) => {
