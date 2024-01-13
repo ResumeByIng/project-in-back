@@ -192,6 +192,8 @@ app.get('/api/get-news', (req, res) => {
 
 // Endpoint สำหรับลบข้อมูล
 app.delete('/api/delete-news/:news_id', (req, res) => {
+    console.log('Received DELETE request at /api/delete-news/:news_id');
+    console.log('Request Params:', req.params);
     const newsIdToDelete = parseInt(req.params.news_id);
 
     // ตรวจสอบว่ามีข่าวที่ต้องการลบหรือไม่
