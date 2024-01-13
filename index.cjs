@@ -190,30 +190,6 @@ app.get('/api/get-news', (req, res) => {
   });
 });
 
-
-// // Endpoint สำหรับลบข้อมูล
-// app.delete('/api/delete-news/:news_id', (req, res) => {
-//   console.log('Received DELETE request at /api/delete-news/:news_id');
-//   console.log('Request Params:', req.params);
-//   const newsIdToDelete = parseInt(req.params.news_id);
-
-//   // Query ในฐานข้อมูล MySQL
-//   const deleteQuery = `DELETE FROM news WHERE news_id = ${newsIdToDelete}`;
-
-//   connection.query(deleteQuery, (error, results, fields) => {
-//     if (error) {
-//       console.log(error);
-//       return res.status(500).json({ error: 'เกิดข้อผิดพลาดในการลบข้อมูล' });
-//     }
-
-//     if (results.affectedRows === 0) {
-//       return res.status(404).json({ error: 'ข่าวที่ต้องการลบไม่พบ' });
-//     }
-
-//     return res.json({ success: true, message: 'ลบข้อมูลสำเร็จ' });
-//   });
-// });
-
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
