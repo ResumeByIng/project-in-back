@@ -177,6 +177,18 @@ app.post('/api/create-news', (req, res) => {
   });
 });
 
+app.get('/api/get-news', (req, res) => {
+  const query = 'SELECT * FROM data_news';
+
+  db.query(query, (error, results) => {
+    if (error) {
+      console.error('Error fetching news:', error);
+      res.status(500).json({ message: 'Error fetching news' });
+    } else {
+      res.status(200).json(results);
+    }
+  });
+});
 const userSecrets = [];
 app.post('/generate-otp', (req, res) => {
   // สร้าง OTP
