@@ -189,6 +189,23 @@ app.get('/api/get-news', (req, res) => {
     }
   });
 });
+
+// Endpoint สำหรับลบข้อมูล
+app.delete('/api/delete-news/:news_id', (req, res) => {
+    const newsIdToDelete = parseInt(req.params.news_id);
+
+    // ตรวจสอบว่ามีข่าวที่ต้องการลบหรือไม่
+    const newsToDelete = newsData.find(news => news.news_id === newsIdToDelete);
+    if (!newsToDelete) {
+        return res.status(404).json({ error: 'ข่าวที่ต้องการลบไม่พบ' });
+    }
+
+    // ลบข้อมูล
+    newsData = newsData.filter(news => news.news_id !== newsIdToDelete);
+
+    return res.json({ success: true, message: 'ลบข้อมูลสำเร็จ' });
+});
+
 const userSecrets = [];
 app.post('/generate-otp', (req, res) => {
   // สร้าง OTP
