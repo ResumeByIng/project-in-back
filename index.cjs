@@ -190,10 +190,6 @@ app.get('/api/get-news', (req, res) => {
   });
 });
 
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
-
 const userSecrets = [];
 app.post('/generate-otp', (req, res) => {
   // สร้าง OTP
@@ -314,7 +310,5 @@ app.post('/line', (req, res) => {
       }, timestamp); 
     }
 });
-app.listen(8000, () => {
-  console.log("Yey, your server is running on port 8000");
-});
+
 module.exports = app;
