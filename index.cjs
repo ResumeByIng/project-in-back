@@ -190,6 +190,21 @@ app.get('/api/get-news', (req, res) => {
   });
 });
 
+app.delete('/api/delete-news/:newsId', (req, res) => {
+  const newsId = req.params.newsId;
+
+  db.query('DELETE FROM data_news WHERE news_id = ?', newsId, (error, result) => {
+    if (error) {
+      console.error('Error deleting news:', error);
+      res.status(500).send('Internal Server Error');
+    } else {
+      console.log('News deleted successfully:', result);
+      res.status(200).send('News deleted successfully');
+    }
+  });
+});
+
+
 const userSecrets = [];
 app.post('/generate-otp', (req, res) => {
   // สร้าง OTP
