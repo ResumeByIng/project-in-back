@@ -314,7 +314,7 @@ app.post('/line', (req, res) => {
       }, timestamp); 
     }
 });
-app.listen(3001, () => {
-  console.log("Yey, your server is running on port 3001");
+app.listen(3030, () => {
+  console.log("Yey, your server is running on port 3030");
 });
 module.exports = app;
