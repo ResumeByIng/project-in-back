@@ -208,10 +208,12 @@ app.post("/api/register", (req, res) => {
   const {
     email,
     password,
-    fullName,
+    firstName,
+    lastName,
     studentId,
     faculty,
-    major,
+    classYear,
+    branch,
     gender
   } = req.body;
 
@@ -231,11 +233,11 @@ app.post("/api/register", (req, res) => {
     // Insert student data into 'data_student' table
     const insertStudentQuery = `
       INSERT INTO data_student (user_id, first_name, last_name, id_student, faculty, branch, class_year, gender)
-      VALUES (?, ?, '', ?, ?, ?, '', ?)
+      VALUES (?, ?, ?, '', ?, ?, ?, '', ?)
     `;
     db.query(
       insertStudentQuery,
-      [userId, fullName, studentId, faculty, major, gender],
+      [userId, firstName, lastName, studentId, faculty, branch, gender],
       (error, studentResult) => {
         if (error) {
           console.error('Error inserting student data:', error);
