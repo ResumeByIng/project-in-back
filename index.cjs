@@ -217,11 +217,11 @@ app.post("/api/register", (req, res) => {
     gender
   } = req.body;
 
-  // Insert user data into 'username' table
   const insertUserQuery = `
     INSERT INTO username (email, password, role)
     VALUES (?, ?, ?)
   `;
+  
   db.query(insertUserQuery, [email, password, 1], (error, userResult) => {
     if (error) {
       console.error('Error inserting user:', error);
@@ -230,21 +230,20 @@ app.post("/api/register", (req, res) => {
 
     const userId = userResult.insertId;
 
-    // Insert student data into 'data_student' table
     const insertStudentQuery = `
       INSERT INTO data_student (user_id, first_name, last_name, id_student, faculty, branch, class_year, gender)
-      VALUES (?, ?, ?, '', ?, ?, ?, '', ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `;
+    
     db.query(
       insertStudentQuery,
-      [userId, firstName, lastName, studentId, faculty, branch, gender],
+      [userId, firstName, lastName, studentId, faculty, branch, classYear, gender],
       (error, studentResult) => {
         if (error) {
           console.error('Error inserting student data:', error);
           return res.status(500).json({ message: 'Error registering user' });
         }
 
-        // Return success message
         return res.status(200).json({ message: 'User registered successfully' });
       }
     );
