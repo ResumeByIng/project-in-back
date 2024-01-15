@@ -204,6 +204,51 @@ app.delete('/api/delete-news/:newsId', (req, res) => {
   });
 });
 
+app.post("/api/register", (req, res) => {
+  const {
+    email,
+    password,
+    fullName,
+    studentId,
+    faculty,
+    major,
+    gender
+  } = req.body;
+
+  // Insert user data into 'username' table
+  const insertUserQuery = `
+    INSERT INTO username (email, password, role)
+    VALUES (?, ?, ?)
+  `;
+  db.query(insertUserQuery, [email, password, 1], (error, userResult) => {
+    if (error) {
+      console.error('Error inserting user:', error);
+      return res.status(500).json({ message: 'Error registering user' });
+    }
+
+    const userId = userResult.insertId;
+
+    // Insert student data into 'data_student' table
+    const insertStudentQuery = `
+      INSERT INTO data_student (user_id, first_name, last_name, id_student, faculty, branch, class_year, gender)
+      VALUES (?, ?, '', ?, ?, ?, '', ?)
+    `;
+    db.query(
+      insertStudentQuery,
+      [userId, fullName, studentId, faculty, major, gender],
+      (error, studentResult) => {
+        if (error) {
+          console.error('Error inserting student data:', error);
+          return res.status(500).json({ message: 'Error registering user' });
+        }
+
+        // Return success message
+        return res.status(200).json({ message: 'User registered successfully' });
+      }
+    );
+  });
+});
+
 
 const userSecrets = [];
 app.post('/generate-otp', (req, res) => {
