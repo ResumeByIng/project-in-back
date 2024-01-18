@@ -258,15 +258,15 @@ app.post('/api/save-extrapoints', (req, res) => {
     clause,
     list,
     points,
-    student_id
+    id_student
   } = req.body;
 
   const query = `
-    INSERT INTO Extrapoints (extrapoint_picture, first_name, last_name, clause, list, points, student_id)
+    INSERT INTO Extrapoints (extrapoint_picture, first_name, last_name, clause, list, points, id_student)
     VALUES (?, ?, ?, ?, ?, ?, ?)
   `;
 
-  db.query(query, [extrapoint_picture, first_name, last_name, clause, list, points, student_id], (error, results) => {
+  db.query(query, [extrapoint_picture, first_name, last_name, clause, list, points, id_student], (error, results) => {
     if (error) {
       console.error('Error saving extrapoints:', error);
       res.status(500).json({ message: 'Error saving extrapoints' });
