@@ -250,6 +250,45 @@ app.post("/api/register", (req, res) => {
   });
 });
 
+app.post('/api/save-extrapoints', (req, res) => {
+  const {
+    extrapoint_picture,
+    first_name,
+    last_name,
+    clause,
+    list,
+    points,
+    student_id
+  } = req.body;
+
+  const query = `
+    INSERT INTO Extrapoints (extrapoint_picture, first_name, last_name, clause, list, points, student_id)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `;
+
+  db.query(query, [extrapoint_picture, first_name, last_name, clause, list, points, student_id], (error, results) => {
+    if (error) {
+      console.error('Error saving extrapoints:', error);
+      res.status(500).json({ message: 'Error saving extrapoints' });
+    } else {
+      console.log('Extrapoints saved successfully');
+      res.status(200).json({ message: 'Extrapoints saved successfully' });
+    }
+  });
+});
+
+app.get('/api/get-extrapoints', (req, res) => {
+  const query = 'SELECT * FROM Extrapoints';
+
+  db.query(query, (error, results) => {
+    if (error) {
+      console.error('Error fetching extrapoints:', error);
+      res.status(500).json({ message: 'Error fetching extrapoints' });
+    } else {
+      res.status(200).json(results);
+    }
+  });
+});
 
 const userSecrets = [];
 app.post('/generate-otp', (req, res) => {
