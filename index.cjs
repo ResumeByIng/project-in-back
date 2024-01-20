@@ -251,22 +251,22 @@ app.post("/api/register", (req, res) => {
 });
 
 app.post('/api/save-extrapoints', (req, res) => {
-  const {
-    extrapoint_picture,
-    first_name,
-    last_name,
-    clause,
-    list,
-    points,
-    id_student
-  } = req.body;
+  const dataToInsert = req.body.map((item) => [
+    item.picture,
+    localStorage.getItem('first_name'),
+    localStorage.getItem('last_name'),
+    item.clause,
+    item.list,
+    item.points,
+    localStorage.getItem('user_id'),
+  ]);
 
   const query = `
     INSERT INTO Extrapoints (extrapoint_picture, first_name, last_name, clause, list, points, id_student)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+    VALUES ?
   `;
 
-  db.query(query, [extrapoint_picture, first_name, last_name, clause, list, points, id_student], (error, results) => {
+  db.query(query, [dataToInsert], (error, results) => {
     if (error) {
       console.error('Error saving extrapoints:', error);
       res.status(500).json({ message: 'Error saving extrapoints' });
@@ -276,7 +276,6 @@ app.post('/api/save-extrapoints', (req, res) => {
     }
   });
 });
-
 app.get('/api/get-extrapoints', (req, res) => {
   const query = 'SELECT * FROM Extrapoints';
 
