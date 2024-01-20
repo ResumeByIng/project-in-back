@@ -263,7 +263,7 @@ app.post('/api/save-extrapoints', (req, res) => {
 
   const query = `
     INSERT INTO Extrapoints (extrapoint_picture, first_name, last_name, clause, list, points, id_student)
-    VALUES ?
+    VALUES ?;
   `;
 
   db.query(query, [dataToInsert], (error, results) => {
@@ -276,6 +276,7 @@ app.post('/api/save-extrapoints', (req, res) => {
     }
   });
 });
+
 app.get('/api/get-extrapoints', (req, res) => {
   const query = 'SELECT * FROM Extrapoints';
 
