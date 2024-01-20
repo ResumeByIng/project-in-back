@@ -5,7 +5,25 @@ const speakeasy = require('speakeasy');
 const moment = require('moment-timezone');
 const axios = require('axios');
 const { config } = require('dotenv');;
+
+const multer = require('multer');
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/'); // ระบุโฟลเดอร์ที่จะบันทึกไฟล์
+  },
+  filename: function (req, file, cb) {
+    cb(null, file.originalname); // ให้ไฟล์ถูกบันทึกด้วยชื่อเดิม
+  }
+});
+
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 10 * 1024 * 1024 } // 10 MB
+});
+
 config({ path: `${__dirname}/.env` });
+
 const app = express();
 // const postmark = require('postmark');
 // const client = new postmark.ServerClient(process.env.TOKEN_EMAIL);
@@ -250,9 +268,12 @@ app.post("/api/register", (req, res) => {
   });
 });
 
-app.post('/api/save-extrapoints', (req, res) => {
+app.post('/api/save-extrapoints', upload.single('extrapoint_picture'), (req, res) => {
+  // Access the uploaded file using req.file
+  const file = req.file;
+  // Process the file as needed
+
   const {
-    extrapoint_picture,
     first_name,
     last_name,
     clause,
@@ -266,7 +287,7 @@ app.post('/api/save-extrapoints', (req, res) => {
     VALUES (?, ?, ?, ?, ?, ?, ?)
   `;
 
-  db.query(query, [extrapoint_picture, first_name, last_name, clause, list, points, id_student], (error, results) => {
+  db.query(query, [file.filename, first_name, last_name, clause, list, points, id_student], (error, results) => {
     if (error) {
       console.error('Error saving extrapoints:', error);
       res.status(500).json({ message: 'Error saving extrapoints' });
@@ -277,138 +298,138 @@ app.post('/api/save-extrapoints', (req, res) => {
   });
 });
 
-app.get('/api/get-extrapoints', (req, res) => {
-  const query = 'SELECT * FROM Extrapoints';
+// app.get('/api/get-extrapoints', (req, res) => {
+//   const query = 'SELECT * FROM Extrapoints';
 
-  db.query(query, (error, results) => {
-    if (error) {
-      console.error('Error fetching extrapoints:', error);
-      res.status(500).json({ message: 'Error fetching extrapoints' });
-    } else {
-      res.status(200).json(results);
-    }
-  });
-});
+//   db.query(query, (error, results) => {
+//     if (error) {
+//       console.error('Error fetching extrapoints:', error);
+//       res.status(500).json({ message: 'Error fetching extrapoints' });
+//     } else {
+//       res.status(200).json(results);
+//     }
+//   });
+// });
 
 const userSecrets = [];
-app.post('/generate-otp', (req, res) => {
-  // สร้าง OTP
-  userSecrets[req.body.email] = speakeasy.generateSecret();
-  const otp = speakeasy.totp({
-    secret: userSecrets[req.body.email].base32,
-    step: 60,
-  });
+// app.post('/generate-otp', (req, res) => {
+//   // สร้าง OTP
+//   userSecrets[req.body.email] = speakeasy.generateSecret();
+//   const otp = speakeasy.totp({
+//     secret: userSecrets[req.body.email].base32,
+//     step: 60,
+//   });
 
-  // ข้อความอีเมล
-  const mailOptions = {
-    from: 's62122519025@ssru.ac.th', // อีเมลของคุณ
-    to: req.body.email, // อีเมลผู้รับ
-    subject: 'การยืนยันตัวตนในระบบประกันคุณภาพ', // หัวข้ออีเมล
-    textBody: `เราขอยืนยันตัวตนของคุณในระบบประกันคุณภาพด้วยรหัส OTP ดังนี้: ${otp}\nกรุณาใส่รหัส OTP นี้ในแอปพลิเคชันของคุณเพื่อยืนยันตัวตน\n\nขอแสดงความนับถือ\nทีมงานระบบประกันคุณภาพ`, // เนื้อหาข้อความ
-  };
+//   // ข้อความอีเมล
+//   const mailOptions = {
+//     from: 's62122519025@ssru.ac.th', // อีเมลของคุณ
+//     to: req.body.email, // อีเมลผู้รับ
+//     subject: 'การยืนยันตัวตนในระบบประกันคุณภาพ', // หัวข้ออีเมล
+//     textBody: `เราขอยืนยันตัวตนของคุณในระบบประกันคุณภาพด้วยรหัส OTP ดังนี้: ${otp}\nกรุณาใส่รหัส OTP นี้ในแอปพลิเคชันของคุณเพื่อยืนยันตัวตน\n\nขอแสดงความนับถือ\nทีมงานระบบประกันคุณภาพ`, // เนื้อหาข้อความ
+//   };
 
-  // ส่งอีเมล
-  client.sendEmail(mailOptions, (error, info) => {
-    if (error) {
-      console.error('Error sending email: ', error);
-      res.status(500).json({ message: 'Error sending OTP email' });
-    } else {
-      console.log('Email sent: ', info.response);
-      res.json({ message: 'OTP sent successfully' });
-    }
-  });
-});
+//   // ส่งอีเมล
+//   client.sendEmail(mailOptions, (error, info) => {
+//     if (error) {
+//       console.error('Error sending email: ', error);
+//       res.status(500).json({ message: 'Error sending OTP email' });
+//     } else {
+//       console.log('Email sent: ', info.response);
+//       res.json({ message: 'OTP sent successfully' });
+//     }
+//   });
+// });
 
-app.post('/verify', (req, res) => {
-  const verified = speakeasy.totp.verify({
-    secret: userSecrets[req.body.email].base32,
-    token: req.body.otp,
-    step: 60, // ต้องตรงกับค่า step ที่ใช้ในการสร้าง OTP
-  });
-  if (verified) {
-    // ค่า OTP ถูกต้อง
-    res.json({ message: 'OTP ถูกต้อง' });
-  } else {
-    // ค่า OTP ไม่ถูกต้อง
-    res.status(400).json({ message: 'OTP ไม่ถูกต้อง' });
-  }
-});
+// app.post('/verify', (req, res) => {
+//   const verified = speakeasy.totp.verify({
+//     secret: userSecrets[req.body.email].base32,
+//     token: req.body.otp,
+//     step: 60, // ต้องตรงกับค่า step ที่ใช้ในการสร้าง OTP
+//   });
+//   if (verified) {
+//     // ค่า OTP ถูกต้อง
+//     res.json({ message: 'OTP ถูกต้อง' });
+//   } else {
+//     // ค่า OTP ไม่ถูกต้อง
+//     res.status(400).json({ message: 'OTP ไม่ถูกต้อง' });
+//   }
+// });
 
-app.post('/reset-otp', (req, res) => {
-  const secret = speakeasy.generateSecret();
-  userSecrets[req.body.email] = secret;
+// app.post('/reset-otp', (req, res) => {
+//   const secret = speakeasy.generateSecret();
+//   userSecrets[req.body.email] = secret;
 
-  const otp = speakeasy.totp({
-    secret: secret.base32,
-    step: 60,
-  });
+//   const otp = speakeasy.totp({
+//     secret: secret.base32,
+//     step: 60,
+//   });
 
-  const mailOptions = {
-    from: 's62122519025@ssru.ac.th', // อีเมลของคุณ
-    to: req.body.email, // อีเมลผู้รับ
-    subject: 'การยืนยันตัวตนในระบบประกันคุณภาพ', // หัวข้ออีเมล
-    textBody: `สวัสดีคุณ ${req.body.email},\n\nเราขอยืนยันตัวตนของคุณในระบบประกันคุณภาพด้วยรหัส OTP ดังนี้: ${otp}\nกรุณาใส่รหัส OTP นี้ในแอปพลิเคชันของคุณเพื่อยืนยันตัวตน\n\nขอแสดงความนับถือ,\nทีมงานระบบประกันคุณภาพ`, // เนื้อหาข้อความ
-  };
+  // const mailOptions = {
+  //   from: 's62122519025@ssru.ac.th', // อีเมลของคุณ
+  //   to: req.body.email, // อีเมลผู้รับ
+  //   subject: 'การยืนยันตัวตนในระบบประกันคุณภาพ', // หัวข้ออีเมล
+  //   textBody: `สวัสดีคุณ ${req.body.email},\n\nเราขอยืนยันตัวตนของคุณในระบบประกันคุณภาพด้วยรหัส OTP ดังนี้: ${otp}\nกรุณาใส่รหัส OTP นี้ในแอปพลิเคชันของคุณเพื่อยืนยันตัวตน\n\nขอแสดงความนับถือ,\nทีมงานระบบประกันคุณภาพ`, // เนื้อหาข้อความ
+  // };
 
-  client.sendEmail(mailOptions, (error, info) => {
-    if (error) {
-      console.error('Error sending email: ', error);
-      res.status(500).json({ message: 'Error sending OTP email' });
-    } else {
-      console.log('Email sent: ', info.response);
-      res.json({ message: 'OTP reset successfully' });
-    }
-  });
-});
+//   client.sendEmail(mailOptions, (error, info) => {
+//     if (error) {
+//       console.error('Error sending email: ', error);
+//       res.status(500).json({ message: 'Error sending OTP email' });
+//     } else {
+//       console.log('Email sent: ', info.response);
+//       res.json({ message: 'OTP reset successfully' });
+//     }
+//   });
+// });
 
-app.delete('/delete-secret/:email', (req, res) => {
-  const userEmailToRetrieve = req.params.email;
+// app.delete('/delete-secret/:email', (req, res) => {
+//   const userEmailToRetrieve = req.params.email;
 
-  if (userSecrets[userEmailToRetrieve]) {
-    // ลบข้อมูลเครื่องมือ OTP ของผู้ใช้
-    delete userSecrets[userEmailToRetrieve];
-    res.status(200).json({ message: 'Deleted user OTP secret successfully' });
-  } else {
-    // ไม่พบข้อมูลเครื่องมือ OTP ของผู้ใช้
-    res.status(404).json({ message: 'User OTP secret not found' });
-  }
-});
-app.post('/delete-otp', (req, res) => {
-  delete userSecrets[userEmailToRetrieve];
-});
+//   if (userSecrets[userEmailToRetrieve]) {
+//     // ลบข้อมูลเครื่องมือ OTP ของผู้ใช้
+//     delete userSecrets[userEmailToRetrieve];
+//     res.status(200).json({ message: 'Deleted user OTP secret successfully' });
+//   } else {
+//     // ไม่พบข้อมูลเครื่องมือ OTP ของผู้ใช้
+//     res.status(404).json({ message: 'User OTP secret not found' });
+//   }
+// });
+// app.post('/delete-otp', (req, res) => {
+//   delete userSecrets[userEmailToRetrieve];
+// });
 
-app.post('/line', (req, res) => {
-  const formattedDate = moment.tz(req.body.dateTQF, 'Asia/Bangkok');
-  const currentDate = moment();
-  formattedDate.startOf('day'); // เริ่มเวลาที่ 00:00:00
-  currentDate.startOf('day');  // เริ่มเวลาที่ 00:00:00
-  const deadline = formattedDate.format('YYYY-MM-DD');
-  console.log(formattedDate)
-  console.log(currentDate)
-  const timestamp = formattedDate - currentDate;
-  console.log(timestamp)
-    if (timestamp < 86400000) {
-      res.status(200).json({ success: 'อัพเดตวันที่สำเร็จ' });
-      setTimeout(() => {
-        const token = process.env.TOKEN;
-        const message = `\nไกล้ครบกำหนดวันที่  ${deadline}\nอย่าลืมส่งเอกสารมคอ.นะครับ!`;
-        const url = 'https://notify-api.line.me/api/notify';
-        const data = {
-          message: message
-        };
-        const headers = {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/x-www-form-urlencoded'
-        };
-        axios.post(url, new URLSearchParams(data), { headers })
-          .then(response => {
-            console.log('ส่งข้อความสำเร็จ!');
-          })
-          .catch(error => {
-            console.error('เกิดข้อผิดพลาดในการส่งข้อความ:', error);
-          });
-      }, timestamp); 
-    }
-});
+// app.post('/line', (req, res) => {
+//   const formattedDate = moment.tz(req.body.dateTQF, 'Asia/Bangkok');
+//   const currentDate = moment();
+//   formattedDate.startOf('day'); // เริ่มเวลาที่ 00:00:00
+//   currentDate.startOf('day');  // เริ่มเวลาที่ 00:00:00
+//   const deadline = formattedDate.format('YYYY-MM-DD');
+//   console.log(formattedDate)
+//   console.log(currentDate)
+//   const timestamp = formattedDate - currentDate;
+//   console.log(timestamp)
+//     if (timestamp < 86400000) {
+//       res.status(200).json({ success: 'อัพเดตวันที่สำเร็จ' });
+//       setTimeout(() => {
+//         const token = process.env.TOKEN;
+//         const message = `\nไกล้ครบกำหนดวันที่  ${deadline}\nอย่าลืมส่งเอกสารมคอ.นะครับ!`;
+//         const url = 'https://notify-api.line.me/api/notify';
+//         const data = {
+//           message: message
+//         };
+//         const headers = {
+//           'Authorization': `Bearer ${token}`,
+//           'Content-Type': 'application/x-www-form-urlencoded'
+//         };
+//         axios.post(url, new URLSearchParams(data), { headers })
+//           .then(response => {
+//             console.log('ส่งข้อความสำเร็จ!');
+//           })
+//           .catch(error => {
+//             console.error('เกิดข้อผิดพลาดในการส่งข้อความ:', error);
+//           });
+//       }, timestamp); 
+//     }
+// });
 
 module.exports = app;
