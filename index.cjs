@@ -10,7 +10,7 @@ const multer = require('multer');
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, 'uploads/'); // ระบุโฟลเดอร์ที่จะบันทึกไฟล์
+    cb(null, '/public/images/extrapoints'); // ระบุโฟลเดอร์ที่จะบันทึกไฟล์
   },
   filename: function (req, file, cb) {
     cb(null, file.originalname); // ให้ไฟล์ถูกบันทึกด้วยชื่อเดิม
