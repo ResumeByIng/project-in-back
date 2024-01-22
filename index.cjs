@@ -13,9 +13,9 @@ const storage = multer.diskStorage({
     cb(null, '/public/images/extrapoints'); // ระบุโฟลเดอร์ที่จะบันทึกไฟล์
   },
   filename: function (req, file, cb) {
-    cb(null, file.originalname); // ให้ไฟล์ถูกบันทึกด้วยชื่อเดิม
+    cb(null, file.fieldname + "_" + Date.now() + path.extname(file.originalname)); // ให้ไฟล์ถูกบันทึกด้วยชื่อเดิม
   }
-});
+}); 
 
 const upload = multer({
   storage: storage,
@@ -311,7 +311,20 @@ app.post('/api/save-extrapoints', upload.single('extrapoint_picture'), (req, res
 //   });
 // });
 
-const userSecrets = [];
+// Endpoint to get all meetings
+app.get('/api/meetings', (req, res) => {
+  res.json(meetings);
+});
+
+// Endpoint to add a new meeting
+app.post('/api/meetings', (req, res) => {
+  const newMeeting = req.body;
+  meetings.push(newMeeting);
+  res.json({ message: 'Meeting added successfully' });
+});
+
+
+//const userSecrets = [];
 // app.post('/generate-otp', (req, res) => {
 //   // สร้าง OTP
 //   userSecrets[req.body.email] = speakeasy.generateSecret();
