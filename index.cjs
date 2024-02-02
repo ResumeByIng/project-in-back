@@ -1,12 +1,16 @@
 const express = require('express');
 const { createConnection } = require('mysql');
 const cors = require('cors');
+const speakeasy = require('speakeasy');
 const moment = require('moment-timezone');
 const axios = require('axios');
 const { config } = require('dotenv');;
-const speakeasy = require('speakeasy');
+config({ path: `${__dirname}/.env` });
+
 const postmark = require('postmark');
 const client = new postmark.ServerClient(process.env.TOKEN_EMAIL);
+app.use(express.json()); 
+app.use(cors());
 
 const multer = require('multer');
 
