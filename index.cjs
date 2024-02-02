@@ -7,11 +7,6 @@ const axios = require('axios');
 const { config } = require('dotenv');;
 config({ path: `${__dirname}/.env` });
 
-const postmark = require('postmark');
-const client = new postmark.ServerClient(process.env.TOKEN_EMAIL);
-app.use(express.json()); 
-app.use(cors());
-
 const multer = require('multer');
 
 const storage = multer.diskStorage({
@@ -31,8 +26,8 @@ const upload = multer({
 config({ path: `${__dirname}/.env` });
 
 const app = express();
-// const postmark = require('postmark');
-// const client = new postmark.ServerClient(process.env.TOKEN_EMAIL);
+const postmark = require('postmark');
+const client = new postmark.ServerClient(process.env.TOKEN_EMAIL);
 app.use(express.json()); 
 app.use(cors());
 
