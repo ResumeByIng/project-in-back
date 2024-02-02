@@ -5,17 +5,19 @@ const speakeasy = require('speakeasy');
 const moment = require('moment-timezone');
 const axios = require('axios');
 const { config } = require('dotenv');;
+const client = new postmark.ServerClient(process.env.TOKEN_EMAIL);
 
 const multer = require('multer');
+const meetings = [];
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, '/public/images/extrapoints'); // ระบุโฟลเดอร์ที่จะบันทึกไฟล์
   },
   filename: function (req, file, cb) {
-    cb(null, file.fieldname + "_" + Date.now() + path.extname(file.originalname)); // ให้ไฟล์ถูกบันทึกด้วยชื่อเดิม
+    cb(null, file.originalname); // ให้ไฟล์ถูกบันทึกด้วยชื่อเดิม
   }
-}); 
+});
 
 const upload = multer({
   storage: storage,
@@ -268,33 +270,41 @@ app.post("/api/register", (req, res) => {
   });
 });
 
-app.post('/api/save-extrapoints', upload.single('extrapoint_picture'), (req, res) => {
-  // Access the uploaded file using req.file
-  const file = req.file;
-  // Process the file as needed
-
+app.post("/api/registerbyadminna", (req, res) => {
   const {
-    first_name,
-    last_name,
-    clause,
-    list,
-    points,
-    id_student
+    email,
+    password
   } = req.body;
 
-  const query = `
-    INSERT INTO Extrapoints (extrapoint_picture, first_name, last_name, clause, list, points, id_student)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+  const insertUserQuery = `
+    INSERT INTO username (email, password, role)
+    VALUES (?, ?, ?)
   `;
-
-  db.query(query, [file.filename, first_name, last_name, clause, list, points, id_student], (error, results) => {
+  
+  db.query(insertUserQuery, [email, password, 2], (error, userResult) => {
     if (error) {
-      console.error('Error saving extrapoints:', error);
-      res.status(500).json({ message: 'Error saving extrapoints' });
-    } else {
-      console.log('Extrapoints saved successfully');
-      res.status(200).json({ message: 'Extrapoints saved successfully' });
+      console.error('Error inserting user:', error);
+      return res.status(500).json({ message: 'Error registering user' });
     }
+
+    const userId = userResult.insertId;
+
+      const insertProfessorQuery = `
+      INSERT INTO data_professor (user_id, first_name, last_name, faculty, branch, position, qualification, gender)
+      VALUES (?, '', '', '', '', '', '', '')
+    `;
+    
+    db.query(
+      insertProfessorQuery,
+      [userId, null, null, null, null, null, null],
+      (error, professorResult) => {
+        if (error) {
+          console.error('Error inserting professor data:', error);
+          return res.status(500).json({ message: 'Error registering professor' });
+        }
+        return res.status(200).json({ message: 'Professor registered successfully' });
+      }
+    );
   });
 });
 
@@ -316,133 +326,116 @@ app.get('/api/meetings', (req, res) => {
   res.json(meetings);
 });
 
-// Endpoint to add a new meeting
-app.post('/api/meetings', (req, res) => {
-  const newMeeting = req.body;
-  meetings.push(newMeeting);
-  res.json({ message: 'Meeting added successfully' });
+// Endpoint เพื่อเพิ่ม Meeting
+app.post('/api/meetings', async (req, res) => {
+  try {
+    const { title, date, room, position, agenda } = req.body;
+
+    // Validate input
+    if (!title || !date || !room || !position || !agenda) {
+      return res.status(400).json({ message: 'Invalid input' });
+    }
+
+    // Insert ข้อมูลลงในฐานข้อมูล Meetings ด้วย SQL query
+    const [rows] = await connection.execute(
+      'INSERT INTO data_meeting (title, date, room, position, agenda) VALUES (?, ?, ?, ?, ?)',
+      [title, date, room, position, agenda]
+    );
+
+    res.status(201).json({ message: 'Meeting added successfully', meeting: { meeting_id: rows.insertId, title, date, room, position, agenda } });
+  } catch (error) {
+    console.error('Error adding meeting:', error);
+    res.status(500).json({ message: 'Error adding meeting' });
+  }
 });
 
+////////// ระบบ OTP #####////////////////////////////////
 
-//const userSecrets = [];
-// app.post('/generate-otp', (req, res) => {
-//   // สร้าง OTP
-//   userSecrets[req.body.email] = speakeasy.generateSecret();
-//   const otp = speakeasy.totp({
-//     secret: userSecrets[req.body.email].base32,
-//     step: 60,
-//   });
+const userSecrets = [];
+app.post('/generate-otp', (req, res) => {
+  // สร้าง OTP
+  userSecrets[req.body.email] = speakeasy.generateSecret();
+  const otp = speakeasy.totp({
+    secret: userSecrets[req.body.email].base32,
+    step: 60,
+  });
 
-//   // ข้อความอีเมล
-//   const mailOptions = {
-//     from: 's62122519025@ssru.ac.th', // อีเมลของคุณ
-//     to: req.body.email, // อีเมลผู้รับ
-//     subject: 'การยืนยันตัวตนในระบบประกันคุณภาพ', // หัวข้ออีเมล
-//     textBody: `เราขอยืนยันตัวตนของคุณในระบบประกันคุณภาพด้วยรหัส OTP ดังนี้: ${otp}\nกรุณาใส่รหัส OTP นี้ในแอปพลิเคชันของคุณเพื่อยืนยันตัวตน\n\nขอแสดงความนับถือ\nทีมงานระบบประกันคุณภาพ`, // เนื้อหาข้อความ
-//   };
+  // ข้อความอีเมล
+  const mailOptions = {
+    from: 's62122519025@ssru.ac.th', // อีเมลของคุณ
+    to: req.body.email, // อีเมลผู้รับ
+    subject: 'การยืนยันตัวตนในระบบประกันคุณภาพ', // หัวข้ออีเมล
+    textBody: `เราขอยืนยันตัวตนของคุณในระบบประกันคุณภาพด้วยรหัส OTP ดังนี้: ${otp}\nกรุณาใส่รหัส OTP นี้ในแอปพลิเคชันของคุณเพื่อยืนยันตัวตน\n\nขอแสดงความนับถือ\nทีมงานระบบประกันคุณภาพ`, // เนื้อหาข้อความ
+  };
 
-//   // ส่งอีเมล
-//   client.sendEmail(mailOptions, (error, info) => {
-//     if (error) {
-//       console.error('Error sending email: ', error);
-//       res.status(500).json({ message: 'Error sending OTP email' });
-//     } else {
-//       console.log('Email sent: ', info.response);
-//       res.json({ message: 'OTP sent successfully' });
-//     }
-//   });
-// });
+  // ส่งอีเมล
+  client.sendEmail(mailOptions, (error, info) => {
+    if (error) {
+      console.error('Error sending email: ', error);
+      res.status(500).json({ message: 'Error sending OTP email' });
+    } else {
+      console.log('Email sent: ', info.response);
+      res.json({ message: 'OTP sent successfully' });
+    }
+  });
+});
 
-// app.post('/verify', (req, res) => {
-//   const verified = speakeasy.totp.verify({
-//     secret: userSecrets[req.body.email].base32,
-//     token: req.body.otp,
-//     step: 60, // ต้องตรงกับค่า step ที่ใช้ในการสร้าง OTP
-//   });
-//   if (verified) {
-//     // ค่า OTP ถูกต้อง
-//     res.json({ message: 'OTP ถูกต้อง' });
-//   } else {
-//     // ค่า OTP ไม่ถูกต้อง
-//     res.status(400).json({ message: 'OTP ไม่ถูกต้อง' });
-//   }
-// });
+app.post('/verify', (req, res) => {
+  const verified = speakeasy.totp.verify({
+    secret: userSecrets[req.body.email].base32,
+    token: req.body.otp,
+    step: 60, // ต้องตรงกับค่า step ที่ใช้ในการสร้าง OTP
+  });
+  if (verified) {
+    // ค่า OTP ถูกต้อง
+    res.json({ message: 'OTP ถูกต้อง' });
+  } else {
+    // ค่า OTP ไม่ถูกต้อง
+    res.status(400).json({ message: 'OTP ไม่ถูกต้อง' });
+  }
+});
 
-// app.post('/reset-otp', (req, res) => {
-//   const secret = speakeasy.generateSecret();
-//   userSecrets[req.body.email] = secret;
+app.post('/reset-otp', (req, res) => {
+  const secret = speakeasy.generateSecret();
+  userSecrets[req.body.email] = secret;
 
-//   const otp = speakeasy.totp({
-//     secret: secret.base32,
-//     step: 60,
-//   });
+  const otp = speakeasy.totp({
+    secret: secret.base32,
+    step: 60,
+  });
 
-  // const mailOptions = {
-  //   from: 's62122519025@ssru.ac.th', // อีเมลของคุณ
-  //   to: req.body.email, // อีเมลผู้รับ
-  //   subject: 'การยืนยันตัวตนในระบบประกันคุณภาพ', // หัวข้ออีเมล
-  //   textBody: `สวัสดีคุณ ${req.body.email},\n\nเราขอยืนยันตัวตนของคุณในระบบประกันคุณภาพด้วยรหัส OTP ดังนี้: ${otp}\nกรุณาใส่รหัส OTP นี้ในแอปพลิเคชันของคุณเพื่อยืนยันตัวตน\n\nขอแสดงความนับถือ,\nทีมงานระบบประกันคุณภาพ`, // เนื้อหาข้อความ
-  // };
+  const mailOptions = {
+    from: 's62122519025@ssru.ac.th', // อีเมลของคุณ
+    to: req.body.email, // อีเมลผู้รับ
+    subject: 'การยืนยันตัวตนในระบบประกันคุณภาพ', // หัวข้ออีเมล
+    textBody: `สวัสดีคุณ ${req.body.email},\n\nเราขอยืนยันตัวตนของคุณในระบบประกันคุณภาพด้วยรหัส OTP ดังนี้: ${otp}\nกรุณาใส่รหัส OTP นี้ในแอปพลิเคชันของคุณเพื่อยืนยันตัวตน\n\nขอแสดงความนับถือ,\nทีมงานระบบประกันคุณภาพ`, // เนื้อหาข้อความ
+  };
 
-//   client.sendEmail(mailOptions, (error, info) => {
-//     if (error) {
-//       console.error('Error sending email: ', error);
-//       res.status(500).json({ message: 'Error sending OTP email' });
-//     } else {
-//       console.log('Email sent: ', info.response);
-//       res.json({ message: 'OTP reset successfully' });
-//     }
-//   });
-// });
+  client.sendEmail(mailOptions, (error, info) => {
+    if (error) {
+      console.error('Error sending email: ', error);
+      res.status(500).json({ message: 'Error sending OTP email' });
+    } else {
+      console.log('Email sent: ', info.response);
+      res.json({ message: 'OTP reset successfully' });
+    }
+  });
+});
+app.delete('/delete-secret/:email', (req, res) => {
+  const userEmailToRetrieve = req.params.email;
 
-// app.delete('/delete-secret/:email', (req, res) => {
-//   const userEmailToRetrieve = req.params.email;
+  if (userSecrets[userEmailToRetrieve]) {
+    // ลบข้อมูลเครื่องมือ OTP ของผู้ใช้
+    delete userSecrets[userEmailToRetrieve];
+    res.status(200).json({ message: 'Deleted user OTP secret successfully' });
+  } else {
+    // ไม่พบข้อมูลเครื่องมือ OTP ของผู้ใช้
+    res.status(404).json({ message: 'User OTP secret not found' });
+  }
+});
+app.post('/delete-otp', (req, res) => {
+  delete userSecrets[userEmailToRetrieve];
+});
 
-//   if (userSecrets[userEmailToRetrieve]) {
-//     // ลบข้อมูลเครื่องมือ OTP ของผู้ใช้
-//     delete userSecrets[userEmailToRetrieve];
-//     res.status(200).json({ message: 'Deleted user OTP secret successfully' });
-//   } else {
-//     // ไม่พบข้อมูลเครื่องมือ OTP ของผู้ใช้
-//     res.status(404).json({ message: 'User OTP secret not found' });
-//   }
-// });
-// app.post('/delete-otp', (req, res) => {
-//   delete userSecrets[userEmailToRetrieve];
-// });
-
-// app.post('/line', (req, res) => {
-//   const formattedDate = moment.tz(req.body.dateTQF, 'Asia/Bangkok');
-//   const currentDate = moment();
-//   formattedDate.startOf('day'); // เริ่มเวลาที่ 00:00:00
-//   currentDate.startOf('day');  // เริ่มเวลาที่ 00:00:00
-//   const deadline = formattedDate.format('YYYY-MM-DD');
-//   console.log(formattedDate)
-//   console.log(currentDate)
-//   const timestamp = formattedDate - currentDate;
-//   console.log(timestamp)
-//     if (timestamp < 86400000) {
-//       res.status(200).json({ success: 'อัพเดตวันที่สำเร็จ' });
-//       setTimeout(() => {
-//         const token = process.env.TOKEN;
-//         const message = `\nไกล้ครบกำหนดวันที่  ${deadline}\nอย่าลืมส่งเอกสารมคอ.นะครับ!`;
-//         const url = 'https://notify-api.line.me/api/notify';
-//         const data = {
-//           message: message
-//         };
-//         const headers = {
-//           'Authorization': `Bearer ${token}`,
-//           'Content-Type': 'application/x-www-form-urlencoded'
-//         };
-//         axios.post(url, new URLSearchParams(data), { headers })
-//           .then(response => {
-//             console.log('ส่งข้อความสำเร็จ!');
-//           })
-//           .catch(error => {
-//             console.error('เกิดข้อผิดพลาดในการส่งข้อความ:', error);
-//           });
-//       }, timestamp); 
-//     }
-// });
 
 module.exports = app;
