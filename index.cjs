@@ -5,6 +5,7 @@ const moment = require('moment-timezone');
 const axios = require('axios');
 const { config } = require('dotenv');;
 const speakeasy = require('speakeasy');
+const postmark = require('postmark');
 const client = new postmark.ServerClient(process.env.TOKEN_EMAIL);
 
 const multer = require('multer');
