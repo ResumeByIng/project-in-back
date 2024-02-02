@@ -5,10 +5,8 @@ const speakeasy = require('speakeasy');
 const moment = require('moment-timezone');
 const axios = require('axios');
 const { config } = require('dotenv');;
-const client = new postmark.ServerClient(process.env.TOKEN_EMAIL);
 
 const multer = require('multer');
-const meetings = [];
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -270,6 +268,145 @@ app.post("/api/register", (req, res) => {
   });
 });
 
+app.post('/api/save-extrapoints', upload.single('extrapoint_picture'), (req, res) => {
+  // Access the uploaded file using req.file
+  const file = req.file;
+  // Process the file as needed
+
+  const {
+    first_name,
+    last_name,
+    clause,
+    list,
+    points,
+    id_student
+  } = req.body;
+
+  const query = `
+    INSERT INTO Extrapoints (extrapoint_picture, first_name, last_name, clause, list, points, id_student)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `;
+
+  db.query(query, [file.filename, first_name, last_name, clause, list, points, id_student], (error, results) => {
+    if (error) {
+      console.error('Error saving extrapoints:', error);
+      res.status(500).json({ message: 'Error saving extrapoints' });
+    } else {
+      console.log('Extrapoints saved successfully');
+      res.status(200).json({ message: 'Extrapoints saved successfully' });
+    }
+  });
+});
+
+// app.get('/api/get-extrapoints', (req, res) => {
+//   const query = 'SELECT * FROM Extrapoints';
+
+//   db.query(query, (error, results) => {
+//     if (error) {
+//       console.error('Error fetching extrapoints:', error);
+//       res.status(500).json({ message: 'Error fetching extrapoints' });
+//     } else {
+//       res.status(200).json(results);
+//     }
+//   });
+// });
+
+// Endpoint เพื่ออัปเดตข้อมูลอาจารย์ในฐานข้อมูล
+app.put('/api/update-professor/:user_id', (req, res) => {
+  // รับค่า user_id จาก parameter
+  const { user_id } = req.params;
+
+  // รับข้อมูลที่จะอัปเดตจาก body ของคำขอ
+  const { first_name, last_name, faculty, branch, position, qualification, gender } = req.body;
+
+  // เขียน query SQL เพื่ออัปเดตข้อมูลอาจารย์
+  const query = `
+    UPDATE data_professor
+    SET
+      first_name = ?,
+      last_name = ?,
+      faculty = ?,
+      branch = ?,
+      position = ?,
+      qualification = ?,
+      gender = ?
+    WHERE user_id = ?
+  `;
+
+  // Execute the query
+  db.query(query, [first_name, last_name, faculty, branch, position, qualification, gender, user_id], (error, results) => {
+    if (error) {
+      console.error('Error updating professor data:', error);
+      res.status(500).json({ message: 'Error updating professor data' });
+    } else {
+      console.log('Professor data updated successfully');
+      res.status(200).json({ message: 'Professor data updated successfully' });
+    }
+  });
+});
+// Endpoint เพื่อดึงข้อมูล Meetings จากฐานข้อมูล
+app.get('/api/meetings', (req, res) => {
+  // เขียน query SQL เพื่อดึงข้อมูล Meetings จากฐานข้อมูล
+  const query = 'SELECT * FROM data_meeting';
+
+  // ทำการ query ฐานข้อมูล
+  db.query(query, (error, results) => {
+    if (error) {
+      console.error('Error fetching meetings from database:', error);
+      res.status(500).json({ message: 'Error fetching meetings from database' });
+    } else {
+      // ส่งข้อมูล Meetings กลับไปยัง React ในรูปแบบ JSON
+      res.json(results);
+    }
+  });
+});
+
+app.post('/api/meetings', (req, res) => {
+  try {
+    const { title, date, room, position, agenda } = req.body;
+
+    // Validate input
+    if (!title || !date || !room || !position || !agenda) {
+      return res.status(400).json({ message: 'Invalid input' });
+    }
+
+    // Insert ข้อมูลลงในฐานข้อมูล Meetings ด้วย SQL query
+    const query = `
+      INSERT INTO data_meeting (title, date, room, position, agenda)
+      VALUES (?, ?, ?, ?, ?)
+    `;
+
+    db.query(query, [title, date, room, position, agenda], (error, results) => {
+      if (error) {
+        console.error('Error adding meeting:', error);
+        res.status(500).json({ message: 'Error adding meeting' });
+      } else {
+        res.status(201).json({
+          message: 'Meeting added successfully',
+          meeting: { meeting_id: results.insertId, title, date, room, position, agenda },
+        });
+      }
+    });
+  } catch (error) {
+    console.error('Error adding meeting:', error);
+    res.status(500).json({ message: 'Error adding meeting' });
+  }
+});
+
+// สร้างเส้นทางสำหรับดึงข้อมูลจากฐานข้อมูลด้วย user_id
+app.get('/api/data/user/:id', (req, res) => {
+  const userId = req.params.id; // ดึงค่า user_id จาก params
+  const sql = 'SELECT * FROM data_professor WHERE user_id = ?';
+  db.query(sql, [userId], (err, result) => {
+    if (err) {
+      console.error('Error querying MySQL:', err);
+      res.status(500).json({ error: 'Error querying MySQL' });
+      return;
+    }
+    res.json(result);
+  });
+});
+
 app.post("/api/registerbyadminna", (req, res) => {
   const {
     email,
@@ -307,135 +444,5 @@ app.post("/api/registerbyadminna", (req, res) => {
     );
   });
 });
-
-// app.get('/api/get-extrapoints', (req, res) => {
-//   const query = 'SELECT * FROM Extrapoints';
-
-//   db.query(query, (error, results) => {
-//     if (error) {
-//       console.error('Error fetching extrapoints:', error);
-//       res.status(500).json({ message: 'Error fetching extrapoints' });
-//     } else {
-//       res.status(200).json(results);
-//     }
-//   });
-// });
-
-// Endpoint to get all meetings
-app.get('/api/meetings', (req, res) => {
-  res.json(meetings);
-});
-
-// Endpoint เพื่อเพิ่ม Meeting
-app.post('/api/meetings', async (req, res) => {
-  try {
-    const { title, date, room, position, agenda } = req.body;
-
-    // Validate input
-    if (!title || !date || !room || !position || !agenda) {
-      return res.status(400).json({ message: 'Invalid input' });
-    }
-
-    // Insert ข้อมูลลงในฐานข้อมูล Meetings ด้วย SQL query
-    const [rows] = await connection.execute(
-      'INSERT INTO data_meeting (title, date, room, position, agenda) VALUES (?, ?, ?, ?, ?)',
-      [title, date, room, position, agenda]
-    );
-
-    res.status(201).json({ message: 'Meeting added successfully', meeting: { meeting_id: rows.insertId, title, date, room, position, agenda } });
-  } catch (error) {
-    console.error('Error adding meeting:', error);
-    res.status(500).json({ message: 'Error adding meeting' });
-  }
-});
-
-////////// ระบบ OTP #####////////////////////////////////
-
-const userSecrets = [];
-app.post('/generate-otp', (req, res) => {
-  // สร้าง OTP
-  userSecrets[req.body.email] = speakeasy.generateSecret();
-  const otp = speakeasy.totp({
-    secret: userSecrets[req.body.email].base32,
-    step: 60,
-  });
-
-  // ข้อความอีเมล
-  const mailOptions = {
-    from: 's62122519025@ssru.ac.th', // อีเมลของคุณ
-    to: req.body.email, // อีเมลผู้รับ
-    subject: 'การยืนยันตัวตนในระบบประกันคุณภาพ', // หัวข้ออีเมล
-    textBody: `เราขอยืนยันตัวตนของคุณในระบบประกันคุณภาพด้วยรหัส OTP ดังนี้: ${otp}\nกรุณาใส่รหัส OTP นี้ในแอปพลิเคชันของคุณเพื่อยืนยันตัวตน\n\nขอแสดงความนับถือ\nทีมงานระบบประกันคุณภาพ`, // เนื้อหาข้อความ
-  };
-
-  // ส่งอีเมล
-  client.sendEmail(mailOptions, (error, info) => {
-    if (error) {
-      console.error('Error sending email: ', error);
-      res.status(500).json({ message: 'Error sending OTP email' });
-    } else {
-      console.log('Email sent: ', info.response);
-      res.json({ message: 'OTP sent successfully' });
-    }
-  });
-});
-
-app.post('/verify', (req, res) => {
-  const verified = speakeasy.totp.verify({
-    secret: userSecrets[req.body.email].base32,
-    token: req.body.otp,
-    step: 60, // ต้องตรงกับค่า step ที่ใช้ในการสร้าง OTP
-  });
-  if (verified) {
-    // ค่า OTP ถูกต้อง
-    res.json({ message: 'OTP ถูกต้อง' });
-  } else {
-    // ค่า OTP ไม่ถูกต้อง
-    res.status(400).json({ message: 'OTP ไม่ถูกต้อง' });
-  }
-});
-
-app.post('/reset-otp', (req, res) => {
-  const secret = speakeasy.generateSecret();
-  userSecrets[req.body.email] = secret;
-
-  const otp = speakeasy.totp({
-    secret: secret.base32,
-    step: 60,
-  });
-
-  const mailOptions = {
-    from: 's62122519025@ssru.ac.th', // อีเมลของคุณ
-    to: req.body.email, // อีเมลผู้รับ
-    subject: 'การยืนยันตัวตนในระบบประกันคุณภาพ', // หัวข้ออีเมล
-    textBody: `สวัสดีคุณ ${req.body.email},\n\nเราขอยืนยันตัวตนของคุณในระบบประกันคุณภาพด้วยรหัส OTP ดังนี้: ${otp}\nกรุณาใส่รหัส OTP นี้ในแอปพลิเคชันของคุณเพื่อยืนยันตัวตน\n\nขอแสดงความนับถือ,\nทีมงานระบบประกันคุณภาพ`, // เนื้อหาข้อความ
-  };
-
-  client.sendEmail(mailOptions, (error, info) => {
-    if (error) {
-      console.error('Error sending email: ', error);
-      res.status(500).json({ message: 'Error sending OTP email' });
-    } else {
-      console.log('Email sent: ', info.response);
-      res.json({ message: 'OTP reset successfully' });
-    }
-  });
-});
-app.delete('/delete-secret/:email', (req, res) => {
-  const userEmailToRetrieve = req.params.email;
-
-  if (userSecrets[userEmailToRetrieve]) {
-    // ลบข้อมูลเครื่องมือ OTP ของผู้ใช้
-    delete userSecrets[userEmailToRetrieve];
-    res.status(200).json({ message: 'Deleted user OTP secret successfully' });
-  } else {
-    // ไม่พบข้อมูลเครื่องมือ OTP ของผู้ใช้
-    res.status(404).json({ message: 'User OTP secret not found' });
-  }
-});
-app.post('/delete-otp', (req, res) => {
-  delete userSecrets[userEmailToRetrieve];
-});
-
 
 module.exports = app;
