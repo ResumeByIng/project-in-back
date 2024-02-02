@@ -1,10 +1,11 @@
 const express = require('express');
 const { createConnection } = require('mysql');
 const cors = require('cors');
-const speakeasy = require('speakeasy');
 const moment = require('moment-timezone');
 const axios = require('axios');
 const { config } = require('dotenv');;
+const speakeasy = require('speakeasy');
+const client = new postmark.ServerClient(process.env.TOKEN_EMAIL);
 
 const multer = require('multer');
 
@@ -443,6 +444,94 @@ app.post("/api/registerbyadminna", (req, res) => {
       }
     );
   });
+});
+
+////////// ระบบ OTP #####////////////////////////////////
+
+const userSecrets = [];
+app.post('/generate-otp', (req, res) => {
+  // สร้าง OTP
+  userSecrets[req.body.email] = speakeasy.generateSecret();
+  const otp = speakeasy.totp({
+    secret: userSecrets[req.body.email].base32,
+    step: 60,
+  });
+
+  // ข้อความอีเมล
+  const mailOptions = {
+    from: 's62122519025@ssru.ac.th', // อีเมลของคุณ
+    to: req.body.email, // อีเมลผู้รับ
+    subject: 'การยืนยันตัวตนในระบบประกันคุณภาพ', // หัวข้ออีเมล
+    textBody: `เราขอยืนยันตัวตนของคุณในระบบประกันคุณภาพด้วยรหัส OTP ดังนี้: ${otp}\nกรุณาใส่รหัส OTP นี้ในแอปพลิเคชันของคุณเพื่อยืนยันตัวตน\n\nขอแสดงความนับถือ\nทีมงานระบบประกันคุณภาพ`, // เนื้อหาข้อความ
+  };
+
+  // ส่งอีเมล
+  client.sendEmail(mailOptions, (error, info) => {
+    if (error) {
+      console.error('Error sending email: ', error);
+      res.status(500).json({ message: 'Error sending OTP email' });
+    } else {
+      console.log('Email sent: ', info.response);
+      res.json({ message: 'OTP sent successfully' });
+    }
+  });
+});
+
+app.post('/verify', (req, res) => {
+  const verified = speakeasy.totp.verify({
+    secret: userSecrets[req.body.email].base32,
+    token: req.body.otp,
+    step: 60, // ต้องตรงกับค่า step ที่ใช้ในการสร้าง OTP
+  });
+  if (verified) {
+    // ค่า OTP ถูกต้อง
+    res.json({ message: 'OTP ถูกต้อง' });
+  } else {
+    // ค่า OTP ไม่ถูกต้อง
+    res.status(400).json({ message: 'OTP ไม่ถูกต้อง' });
+  }
+});
+
+app.post('/reset-otp', (req, res) => {
+  const secret = speakeasy.generateSecret();
+  userSecrets[req.body.email] = secret;
+
+  const otp = speakeasy.totp({
+    secret: secret.base32,
+    step: 60,
+  });
+
+  const mailOptions = {
+    from: 's62122519025@ssru.ac.th', // อีเมลของคุณ
+    to: req.body.email, // อีเมลผู้รับ
+    subject: 'การยืนยันตัวตนในระบบประกันคุณภาพ', // หัวข้ออีเมล
+    textBody: `สวัสดีคุณ ${req.body.email},\n\nเราขอยืนยันตัวตนของคุณในระบบประกันคุณภาพด้วยรหัส OTP ดังนี้: ${otp}\nกรุณาใส่รหัส OTP นี้ในแอปพลิเคชันของคุณเพื่อยืนยันตัวตน\n\nขอแสดงความนับถือ,\nทีมงานระบบประกันคุณภาพ`, // เนื้อหาข้อความ
+  };
+
+  client.sendEmail(mailOptions, (error, info) => {
+    if (error) {
+      console.error('Error sending email: ', error);
+      res.status(500).json({ message: 'Error sending OTP email' });
+    } else {
+      console.log('Email sent: ', info.response);
+      res.json({ message: 'OTP reset successfully' });
+    }
+  });
+});
+app.delete('/delete-secret/:email', (req, res) => {
+  const userEmailToRetrieve = req.params.email;
+
+  if (userSecrets[userEmailToRetrieve]) {
+    // ลบข้อมูลเครื่องมือ OTP ของผู้ใช้
+    delete userSecrets[userEmailToRetrieve];
+    res.status(200).json({ message: 'Deleted user OTP secret successfully' });
+  } else {
+    // ไม่พบข้อมูลเครื่องมือ OTP ของผู้ใช้
+    res.status(404).json({ message: 'User OTP secret not found' });
+  }
+});
+app.post('/delete-otp', (req, res) => {
+  delete userSecrets[userEmailToRetrieve];
 });
 
 module.exports = app;
