@@ -551,4 +551,17 @@ app.post('/api/complaints', (req, res) => {
   });
 });
 
+// Endpoint to fetch complaints
+app.get('/complaints', (req, res) => {
+  const sql = 'SELECT * FROM complaints';
+  db.query(sql, (err, result) => {
+    if (err) {
+      console.error('Error fetching complaints:', err);
+      res.status(500).json({ error: 'Error fetching complaints' });
+    } else {
+      res.json(result);
+    }
+  });
+});
+
 module.exports = app;
