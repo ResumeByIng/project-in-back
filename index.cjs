@@ -564,9 +564,9 @@ app.get('/complaints', (req, res) => {
   });
 });
 
-app.post('/delete/complaints', (req, res) => {
+app.delete('/api/delete/complaints', (req, res) => {
   const sevenDaysAgo = new Date();
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 1);
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 1); // ฉันปรับเป็น 1 เพื่อจะ test ระบบ
 
   const query = `DELETE FROM complaints WHERE createdAt < '${sevenDaysAgo.toISOString()}'`;
   
