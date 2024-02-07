@@ -534,4 +534,21 @@ app.post('/delete-otp', (req, res) => {
   delete userSecrets[userEmailToRetrieve];
 });
 
+// Endpoint สำหรับรับข้อมูลการร้องเรียนและบันทึกลงฐานข้อมูล
+app.post('/api/complaints', (req, res) => {
+  const { complaintType, complaintText } = req.body;
+
+  // เชื่อมต่อกับฐานข้อมูลและบันทึกข้อมูลการร้องเรียน
+  const query = 'INSERT INTO complaints (complaintType, complaintText) VALUES (?, ?)';
+  db.query(query, [complaintType, complaintText], (error, result) => {
+    if (error) {
+      console.error('Error inserting complaint into database:', error);
+      res.status(500).json({ message: 'Error inserting complaint into database' });
+    } else {
+      console.log('Complaint inserted successfully');
+      res.status(201).json({ message: 'Complaint submitted successfully' });
+    }
+  });
+});
+
 module.exports = app;
