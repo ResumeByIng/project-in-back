@@ -571,7 +571,7 @@ const deleteOldComplaints = () => {
 
   const query = `DELETE FROM complaints WHERE createdAt < '${sevenDaysAgo.toISOString()}'`;
 
-  app.query(query, (err, result) => {
+  db.query(query, (err, result) => {
     if (err) {
       console.error('Error deleting old complaints:', err);
       return;
