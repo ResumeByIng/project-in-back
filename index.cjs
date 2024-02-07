@@ -564,4 +564,24 @@ app.get('/complaints', (req, res) => {
   });
 });
 
+// ตรวจสอบและลบรายการร้องเรียนที่ผ่านไปมากกว่า 7 วัน
+const deleteOldComplaints = () => {
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 1);
+
+  const query = `DELETE FROM complaints WHERE createdAt < '${sevenDaysAgo.toISOString()}'`;
+
+  app.query(query, (err, result) => {
+    if (err) {
+      console.error('Error deleting old complaints:', err);
+      return;
+    }
+    console.log('Old complaints deleted successfully');
+  });
+};
+
+// เรียกใช้ฟังก์ชันลบรายการร้องเรียนที่ผ่านไปมากกว่า 7 วัน
+deleteOldComplaints();
+
+
 module.exports = app;
