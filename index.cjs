@@ -577,7 +577,7 @@ app.post('/delete/complaints', (req, res) => {
     }
     console.log('Old complaints deleted successfully');
   });
-};
+});
 
 
 module.exports = app;
