@@ -69,10 +69,14 @@ app.post("/login", (req, res) => {
     "p.qualification AS professor_qualification, p.gender AS professor_gender, " +
     "s.user_id AS student_user_id, s.first_name AS student_first_name, s.last_name AS student_last_name, " +
     "s.id_student AS student_id_student, s.faculty AS student_faculty, s.branch AS student_branch, " +
-    "s.class_year AS student_class_year, s.gender AS student_gender " +
+    "s.class_year AS student_class_year, s.gender AS student_gender, " +
+    "g.user_id AS graduate_user_id, g.first_name AS graduate_first_name, g.last_name AS graduate_last_name, " +
+    "g.id_graduate AS graduate_id_graduate, g.faculty AS graduate_faculty, g.branch AS graduate_branch, " +
+    "g.class_year AS graduate_class_year, g.gender AS graduate_gender " +
     "FROM username u " +
     "LEFT JOIN data_professor p ON u.id = p.user_id " +
     "LEFT JOIN data_student s ON u.id = s.user_id " +
+    "LEFT JOIN data_graduate g ON u.id = g.user_id " +
     "WHERE u.email = ? AND u.password = ?",
     [email, password],
     (err, result) => {
@@ -88,6 +92,7 @@ app.post("/login", (req, res) => {
     }
   );
 });
+
 
 
 app.get('/api/getpass', (req, res) => {
