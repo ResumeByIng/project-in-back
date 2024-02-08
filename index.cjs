@@ -576,7 +576,7 @@ app.delete('/api/delete/complaints', (req, res) => {
   const formattedDate = yesterday.toISOString();
 
   // สร้างคำสั่ง SQL ที่ใช้ในการลบข้อมูลที่ถูกสร้างก่อนวันที่เท่ากับ yesterday
-  const deleteQuery = `DELETE FROM your_table_name WHERE createdAt < '${formattedDate}'`;
+  const deleteQuery = `DELETE FROM complaints WHERE createdAt < '${formattedDate}'`;
   
   // ทำการ query ข้อมูลในฐานข้อมูล
   db.query(deleteQuery, (err, result) => {
