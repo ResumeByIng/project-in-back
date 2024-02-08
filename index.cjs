@@ -632,8 +632,18 @@ app.post('/api/confirm-graduate/:user_id', (req, res) => {
             return;
           }
 
-          // ส่งข้อความยืนยันกลับไปยัง frontend
-          res.status(200).json({ message: 'Student data confirmed and moved to data_graduate successfully' });
+          // Update role เป็น 3 ในตาราง username
+          const updateRoleQuery = 'UPDATE username SET role = 3 WHERE id = ?';
+          db.query(updateRoleQuery, [userId], (updateError, updateResults) => {
+            if (updateError) {
+              console.error('Error updating role:', updateError);
+              res.status(500).json({ message: 'Error updating role' });
+              return;
+            }
+
+            // ส่งข้อความยืนยันกลับไปยัง frontend
+            res.status(200).json({ message: 'Student data confirmed and moved to data_graduate successfully' });
+          });
         });
       }
     );
