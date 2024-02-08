@@ -564,5 +564,21 @@ app.get('/complaints', (req, res) => {
   });
 });
 
+app.delete('/api/delete/complaints', (req, res) => {
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 1); // ฉันปรับเป็น 1 เพื่อจะ test ระบบ
+
+  const query = `DELETE FROM complaints WHERE createdAt < '${sevenDaysAgo.toISOString()}'`;
+  
+  db.query(query, (err, result) => {
+    if (err) {
+      console.error('Error deleting old complaints:', err);
+      return;
+    }
+    console.log('Old complaints deleted successfully');
+  });
+});
+
+
 
 module.exports = app;
