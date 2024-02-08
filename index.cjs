@@ -565,17 +565,26 @@ app.get('/complaints', (req, res) => {
 });
 
 app.delete('/api/delete/complaints', (req, res) => {
-  const sevenDaysAgo = new Date();
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 1); // ฉันปรับเป็น 1 เพื่อจะ test ระบบ
+  // สร้างวัตถุ Date เพื่อระบุวันที่ปัจจุบัน
+  const today = new Date();
 
-  const query = `DELETE FROM complaints WHERE createdAt < '${sevenDaysAgo.toISOString()}'`;
+  // ให้วันที่ใหม่เป็นวันที่ก่อนหนึ่งวัน
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  // แปลงวันที่ใหม่เป็นรูปแบบ ISO String เพื่อใช้ในคำสั่ง SQL
+  const formattedDate = yesterday.toISOString();
+
+  // สร้างคำสั่ง SQL ที่ใช้ในการลบข้อมูลที่ถูกสร้างก่อนวันที่เท่ากับ yesterday
+  const deleteQuery = `DELETE FROM your_table_name WHERE createdAt < '${formattedDate}'`;
   
-  db.query(query, (err, result) => {
+  // ทำการ query ข้อมูลในฐานข้อมูล
+  db.query(deleteQuery, (err, result) => {
     if (err) {
-      console.error('Error deleting old complaints:', err);
+      console.error('Error deleting old data:', err);
       return;
     }
-    console.log('Old complaints deleted successfully');
+    console.log('Old data deleted successfully');
   });
 });
 
