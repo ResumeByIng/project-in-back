@@ -588,6 +588,58 @@ app.get('/complaints', (req, res) => {
 //   });
 // });
 
+app.post('/api/confirm-graduate/:user_id', (req, res) => {
+  const userId = req.params.user_id;
+
+  // ดึงข้อมูลนักศึกษาจาก data_student
+  const selectQuery = 'SELECT * FROM data_student WHERE user_id = ?';
+  db.query(selectQuery, [userId], (error, results) => {
+    if (error) {
+      console.error('Error selecting student data:', error);
+      res.status(500).json({ message: 'Error selecting student data' });
+      return;
+    }
+
+    // ตรวจสอบว่ามีข้อมูลนักศึกษาหรือไม่
+    if (results.length === 0) {
+      res.status(404).json({ message: 'Student data not found' });
+      return;
+    }
+
+    const studentData = results[0];
+
+    // ย้ายข้อมูลนักศึกษาไปยัง data_graduate
+    const insertQuery = `
+      INSERT INTO data_graduate (user_id, first_name, last_name, id_graduate, faculty, branch, class_year, gender, work_place, salary, work_about)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL)
+    `;
+    db.query(
+      insertQuery,
+      [studentData.user_id, studentData.first_name, studentData.last_name, studentData.id_student, studentData.faculty, studentData.branch, studentData.class_year, studentData.gender],
+      (insertError, insertResults) => {
+        if (insertError) {
+          console.error('Error inserting data into data_graduate:', insertError);
+          res.status(500).json({ message: 'Error inserting data into data_graduate' });
+          return;
+        }
+
+        // ลบข้อมูลนักศึกษาที่ถูกย้ายไปยัง data_graduate ออกจาก data_student
+        const deleteQuery = 'DELETE FROM data_student WHERE user_id = ?';
+        db.query(deleteQuery, [userId], (deleteError, deleteResults) => {
+          if (deleteError) {
+            console.error('Error deleting student data:', deleteError);
+            res.status(500).json({ message: 'Error deleting student data' });
+            return;
+          }
+
+          // ส่งข้อความยืนยันกลับไปยัง frontend
+          res.status(200).json({ message: 'Student data confirmed and moved to data_graduate successfully' });
+        });
+      }
+    );
+  });
+});
+
 
 
 module.exports = app;
