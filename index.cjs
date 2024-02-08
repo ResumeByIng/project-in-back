@@ -655,6 +655,39 @@ app.post('/api/confirm-graduate/:user_id', (req, res) => {
   });
 });
 
+// Endpoint สำหรับดึงข้อมูล salary, work_place, และ work_about ของนิสิตที่ระบุด้วย user_id
+app.get('/data_graduate/all', (req, res) => {
+  const userId = req.query.user_id;
+
+  // ตรวจสอบว่า user_id ถูกส่งมาหรือไม่
+  if (!userId) {
+    return res.status(400).json({ message: 'Missing user_id parameter' });
+  }
+
+  // สร้าง query เพื่อดึงข้อมูล salary, work_place, และ work_about ของนิสิตที่มี user_id ตามที่ระบุ
+  const query = `
+    SELECT salary, work_place, work_about 
+    FROM data_graduate 
+    WHERE user_id = ?
+  `;
+  
+  db.query(query, [userId], (error, results, fields) => {
+    if (error) {
+      console.error('Error fetching data graduate:', error);
+      res.status(500).json({ message: 'Internal server error' });
+      return;
+    }
+
+    // ตรวจสอบว่ามีข้อมูลของ user_id ที่ระบุหรือไม่
+    if (results.length === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // ส่งข้อมูลกลับเป็น JSON response
+    res.json(results[0]); // เนื่องจากเราต้องการเฉพาะข้อมูลของ user_id เดียว
+  });
+});
+
 
 
 module.exports = app;
