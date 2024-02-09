@@ -715,38 +715,6 @@ app.get('/api/all-user-data', (req, res) => {
   });
 });
 
-app.post('/api/data_assessment', async (req, res) => {
-  try {
-    // ดึงข้อมูลที่ส่งมาจากผู้ใช้
-    const { class_year, course_code, name_professor, header, list_1, list_2, list_3, list_4, list_5, list_6, list_7, list_8, list_9, list_10 } = req.body;
-
-    // บันทึกข้อมูลลงในฐานข้อมูล
-    const newData = await DataAssessment.create({
-      classYear: class_year,
-      courseCode: course_code,
-      nameProfessor: name_professor,
-      header: header,
-      list1: list_1,
-      list2: list_2,
-      list3: list_3,
-      list4: list_4,
-      list5: list_5,
-      list6: list_6,
-      list7: list_7,
-      list8: list_8,
-      list9: list_9,
-      list10: list_10,
-    });
-
-    // ส่งคำตอบกลับถ้าสำเร็จ
-    res.status(201).json({ success: true, data: newData });
-  } catch (error) {
-    // ส่งคำตอบกลับถ้าเกิดข้อผิดพลาด
-    console.error('Error while saving data:', error);
-    res.status(500).json({ success: false, error: 'An error occurred while saving data.' });
-  }
-});
-
 app.post('/api/addAssessment', (req, res) => {
   try {
     const { class_year, course_code, name_professor, header, list_1, list_2, list_3, list_4, list_5, list_6, list_7, list_8, list_9, list_10 } = req.body;
@@ -758,7 +726,7 @@ app.post('/api/addAssessment', (req, res) => {
 
     db.query(query, [class_year, course_code, name_professor, header, list_1, list_2, list_3, list_4, list_5, list_6, list_7, list_8, list_9, list_10], (error, results) => {
       if (error) {
-        console.error('Error adding meeting:', error);
+        console.error('Error adding assessment:', error);
         res.status(500).json({ message: 'Error adding assessment' });
       } else {
         res.status(201).json({
