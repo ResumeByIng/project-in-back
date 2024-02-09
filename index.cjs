@@ -751,7 +751,6 @@ app.post('/api/addAssessment', (req, res) => {
   try {
     const { class_year, course_code, name_professor, header, list_1, list_2, list_3, list_4, list_5, list_6, list_7, list_8, list_9, list_10 } = req.body;
 
-    // Insert ข้อมูลลงในฐานข้อมูล Meetings ด้วย SQL query
     const query = `
       INSERT INTO data_assessment ( class_year, course_code, name_professor, header, list_1, list_2, list_3, list_4, list_5, list_6, list_7, list_8, list_9, list_10 )
       VALUES (?, ?, ?, ?, ?, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
@@ -760,17 +759,16 @@ app.post('/api/addAssessment', (req, res) => {
     db.query(query, [class_year, course_code, name_professor, header, list_1, list_2, list_3, list_4, list_5, list_6, list_7, list_8, list_9, list_10], (error, results) => {
       if (error) {
         console.error('Error adding meeting:', error);
-        res.status(500).json({ message: 'Error adding meeting' });
+        res.status(500).json({ message: 'Error adding assessment' });
       } else {
         res.status(201).json({
-          message: 'Meeting added successfully',
-          meeting: { meeting_id: results.insertId, title, date, room, position, agenda },
+          message: 'assessment added successfully',
         });
       }
     });
   } catch (error) {
-    console.error('Error adding meeting:', error);
-    res.status(500).json({ message: 'Error adding meeting' });
+    console.error('Error adding assessment:', error);
+    res.status(500).json({ message: 'Error adding assessment' });
   }
 });
 
