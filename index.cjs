@@ -182,7 +182,7 @@ app.post('/api/reset-date', (req, res) => {
 });
 
 app.post('/api/create-news', (req, res) => {
-  const { title, content, date_created, author } = req.body;
+  const { title, content, author } = req.body;
 
   const query = `
     INSERT INTO data_news (title, content, author)
@@ -190,7 +190,7 @@ app.post('/api/create-news', (req, res) => {
   `;
 
   // Query to insert new news
-  db.query(query, [title, content, date_created, author], (error, results) => {
+  db.query(query, [title, content, author], (error, results) => {
     if (error) {
       console.error('Error creating news:', error);
       res.status(500).json({ message: 'Error creating news' });
