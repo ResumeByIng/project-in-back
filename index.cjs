@@ -185,8 +185,8 @@ app.post('/api/create-news', (req, res) => {
   const { title, content, date_created, author } = req.body;
 
   const query = `
-    INSERT INTO data_news (title, content, date_created, author)
-    VALUES (?, ?, ?, ?)
+    INSERT INTO data_news (title, content, author)
+    VALUES (?, ?, ?)
   `;
 
   // Query to insert new news
