@@ -688,6 +688,33 @@ app.get('/data_graduate/all', (req, res) => {
   });
 });
 
+app.get('/api/all-user-data', (req, res) => {
+  const sqlStudent = 'SELECT * FROM data_student';
+  const sqlGraduate = 'SELECT * FROM data_graduate';
+
+  db.query(sqlStudent, (err, resultStudent) => {
+    if (err) {
+      console.error('Error querying MySQL for student data:', err);
+      res.status(500).json({ error: 'Error querying MySQL for student data' });
+      return;
+    }
+
+    db.query(sqlGraduate, (err, resultGraduate) => {
+      if (err) {
+        console.error('Error querying MySQL for graduate data:', err);
+        res.status(500).json({ error: 'Error querying MySQL for graduate data' });
+        return;
+      }
+
+      const allUserData = {
+        studentData: resultStudent,
+        graduateData: resultGraduate
+      };
+      res.json(allUserData);
+    });
+  });
+});
+
 
 
 module.exports = app;
