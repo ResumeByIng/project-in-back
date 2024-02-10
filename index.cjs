@@ -666,7 +666,7 @@ app.get('/data_graduate/all', (req, res) => {
 
   // สร้าง query เพื่อดึงข้อมูล salary, work_place, และ work_about ของนิสิตที่มี user_id ตามที่ระบุ
   const query = `
-    SELECT salary, work_place, work_about 
+    SELECT salary, work_place, work_about, end_year
     FROM data_graduate 
     WHERE user_id = ?
   `;
