@@ -740,6 +740,41 @@ app.post('/api/addAssessment', (req, res) => {
   }
 });
 
+app.put('/data_graduate/update', (req, res) => {
+  const userData = req.body;
+
+  // ตรวจสอบว่ามีข้อมูลที่ส่งมาครบหรือไม่
+  if (!userData || !userData.user_id) {
+    return res.status(400).json({ message: 'Missing user_id or data' });
+  }
+
+  // สร้าง query เพื่ออัพเดทข้อมูล salary, work_place, work_about, end_year ของบัณฑิตที่มี user_id ตามที่ระบุ
+  const query = `
+    UPDATE data_graduate 
+    SET salary = ?, work_place = ?, work_about = ?, end_year = ?
+    WHERE user_id = ?
+  `;
+
+  const { user_id, salary, work_place, work_about, end_year } = userData;
+
+  db.query(query, [salary, work_place, work_about, end_year, user_id], (error, results, fields) => {
+    if (error) {
+      console.error('Error updating data graduate:', error);
+      res.status(500).json({ message: 'Internal server error' });
+      return;
+    }
+
+    // ตรวจสอบว่ามีข้อมูลของ user_id ที่ระบุหรือไม่
+    if (results.affectedRows === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // ส่งข้อความยืนยันการอัพเดทกลับไปยัง client
+    res.json({ message: 'Data updated successfully' });
+  });
+});
+
+
 
 
 
