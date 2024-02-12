@@ -774,6 +774,27 @@ app.put('/data_graduate/update', (req, res) => {
   });
 });
 
+app.get('/api/data_assessment', (req, res) => {
+  const sql = 'SELECT * FROM data_assessment';
+  db.query(sql, (err, result) => {
+    if (err) {
+      console.error('Error querying MySQL:', err);
+      res.status(500).json({ error: 'Error querying MySQL' });
+      return;
+    }
+    res.json(result);
+  });
+});
+
+db.connect((err) => {
+  if (err) {
+    console.error('Error connecting to MySQL:', err);
+    return;
+  }
+  console.log('Connected to MySQL Database!');
+});
+
+
 
 
 
