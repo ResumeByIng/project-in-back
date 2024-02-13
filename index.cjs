@@ -794,6 +794,21 @@ db.connect((err) => {
   console.log('Connected to MySQL Database!');
 });
 
+app.post('/assessment_votes/:user_id', async (req, res) => {
+    try {
+         const { user_id, votes } = req.body;
+        // Save assessment votes data to database with user_id
+        const savedAssessmentVotes = await AssessmentVote.insertMany({ user_id, votes });
+        res.status(201).json(savedAssessmentVotes); // Respond with saved data
+    } catch (error) {
+        console.error('Error saving assessment votes:', error);
+        res.status(500).json({ error: 'An error occurred while saving assessment votes.' });
+    }
+});
+
+
+
+
 
 
 
