@@ -836,6 +836,30 @@ app.post('/api/save-multiple-pdf', upload.array('file'), (req, res) => {
   res.status(200).json({ message: 'Files uploaded successfully' });
 });
 
+// อัปโหลดไฟล์และบันทึกลงใน MySQL
+app.post('api/upload', upload.single('file'), (req, res) => {
+  const fileData = req.file;
+
+  if (!fileData) {
+    return res.status(400).send('No file uploaded.');
+  }
+
+  const { extrapoint_pdf } = fileData;
+
+  // เขียนคำสั่ง SQL INSERT เพื่อบันทึกข้อมูลไฟล์ลงในตาราง
+  const sql = 'INSERT INTO Extrapoints (extrapoint_pdf) VALUES (?)';
+
+  db.query(sql, [extrapoint_pdf], (err, result) => {
+    if (err) {
+      console.error('Error uploading file:', err);
+      res.status(500).send('Error uploading file.');
+    } else {
+      console.log('File uploaded successfully.');
+      res.status(200).send('File uploaded successfully.');
+    }
+  });
+});
+
 
 
 
