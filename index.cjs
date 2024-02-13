@@ -794,7 +794,7 @@ db.connect((err) => {
   console.log('Connected to MySQL Database!');
 });
 
-app.post('/assessment_votes/:user_id', async (req, res) => {
+app.post('/submit/assessment_votes', async (req, res) => {
     try {
          const { user_id, votes } = req.body;
         // Save assessment votes data to database with user_id
