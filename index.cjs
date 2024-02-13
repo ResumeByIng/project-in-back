@@ -806,6 +806,35 @@ app.post('/submit/assessment_votes', async (req, res) => {
     }
 });
 
+app.post('/api/save-multiple-pdf', upload.array('file'), (req, res) => {
+  // Access the uploaded files using req.files
+  const files = req.files;
+  // Access the selectedExtrapoints data using req.body.selectedExtrapoints
+  const selectedExtrapoints = JSON.parse(req.body.selectedExtrapoints);
+  
+  // Process the files and selectedExtrapoints as needed
+  // For example, you can save each file to the server and then save their metadata to the database
+  // Here's a simple example to save files to the server and log their metadata:
+  files.forEach((file, index) => {
+    const fileName = file.originalname;
+    const fileSize = file.size;
+    const fileType = file.mimetype;
+    // Save the file to the server
+    const filePath = `uploads/${fileName}`;
+    file.mv(filePath, (err) => {
+      if (err) {
+        console.error(`Error saving file ${fileName}:`, err);
+      } else {
+        console.log(`File ${fileName} saved successfully.`);
+        // Save file metadata and selectedExtrapoints to the database or perform other operations as needed
+        // Example: db.saveFileMetadata({ fileName, fileSize, fileType, selectedExtrapoints });
+      }
+    });
+  });
+
+  // Send a response back to the client
+  res.status(200).json({ message: 'Files uploaded successfully' });
+});
 
 
 
