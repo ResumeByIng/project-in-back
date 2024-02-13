@@ -865,7 +865,7 @@ app.post('/submit-assessment', (req, res) => {
   const assessmentData = req.body; // ข้อมูลที่ส่งมาจากหน้าบ้าน
 
   // สร้างคำสั่ง SQL เพื่อบันทึกข้อมูลลงในตาราง data_assessment
-  const sql = `INSERT INTO data_assessment (user_id, assessment_id, vote_value_1, vote_value_2, vote_value_3, vote_value_4, vote_value_5, vote_value_6, vote_value_7, vote_value_8, vote_value_9, vote_value_10) 
+  const sql = `INSERT INTO data_assessment (user_id, id, vote_value_1, vote_value_2, vote_value_3, vote_value_4, vote_value_5, vote_value_6, vote_value_7, vote_value_8, vote_value_9, vote_value_10) 
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
   // ดึง student_id จาก assessmentData (ถ้ามี)
