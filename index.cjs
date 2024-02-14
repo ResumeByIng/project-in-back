@@ -947,7 +947,7 @@ app.get('/api/get-assessment-data', (req, res) => {
 app.post('/upload/', upload.single('pdfFile'), (req, res) => {
   // const fileData = req.file.buffer; // ข้อมูลไฟล์ในรูปแบบ binary
   const { extrapoint_id, first_name, last_name, clause, list, points, id_student } = req.body;
-  const upload_file_path = req.file.path;
+  const upload_file_path = 'uploads/Doc1 copy.pdf';
 
   const query = 'INSERT INTO Extrapoints (extrapoint_pdf, first_name, last_name, clause, list, points, id_student) VALUES (?, ?, ?, ?, ?, ?, ?)';
 
