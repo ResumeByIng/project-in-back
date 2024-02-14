@@ -569,29 +569,29 @@ app.get('/complaints', (req, res) => {
   });
 });
 
-// app.delete('/api/delete/complaints', (req, res) => {
-//   // สร้างวัตถุ Date เพื่อระบุวันที่ปัจจุบัน
-//   const today = new Date();
+app.delete('/api/delete/complaints', (req, res) => {
+  // สร้างวัตถุ Date เพื่อระบุวันที่ปัจจุบัน
+  const today = new Date();
 
-//   // ให้วันที่ใหม่เป็นวันที่ก่อนหนึ่งวัน
-//   const yesterday = new Date(today);
-//   yesterday.setDate(yesterday.getDate() - 1);
+  // ให้วันที่ใหม่เป็นวันที่ก่อนหนึ่งวัน
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 7);
 
-//   // แปลงวันที่ใหม่เป็นรูปแบบ ISO String เพื่อใช้ในคำสั่ง SQL
-//   const formattedDate = yesterday.toISOString();
+  // แปลงวันที่ใหม่เป็นรูปแบบ ISO String เพื่อใช้ในคำสั่ง SQL
+  const formattedDate = yesterday.toISOString();
 
-//   // สร้างคำสั่ง SQL ที่ใช้ในการลบข้อมูลที่ถูกสร้างก่อนวันที่เท่ากับ yesterday
-//   const deleteQuery = `DELETE FROM complaints WHERE createdAt < '${formattedDate}'`;
+  // สร้างคำสั่ง SQL ที่ใช้ในการลบข้อมูลที่ถูกสร้างก่อนวันที่เท่ากับ yesterday
+  const deleteQuery = `DELETE FROM complaints WHERE createdAt < '${formattedDate}'`;
   
-//   // ทำการ query ข้อมูลในฐานข้อมูล
-//   db.query(deleteQuery, (err, result) => {
-//     if (err) {
-//       console.error('Error deleting old data:', err);
-//       return;
-//     }
-//     console.log('Old data deleted successfully');
-//   });
-// });
+  // ทำการ query ข้อมูลในฐานข้อมูล
+  db.query(deleteQuery, (err, result) => {
+    if (err) {
+      console.error('Error deleting old data:', err);
+      return;
+    }
+    console.log('Old data deleted successfully');
+  });
+});
 
 app.post('/api/confirm-graduate/:user_id', (req, res) => {
   const userId = req.params.user_id;
