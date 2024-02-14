@@ -11,17 +11,14 @@ const multer = require('multer');
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, '/public/images/extrapoints'); // ระบุโฟลเดอร์ที่จะบันทึกไฟล์
+    cb(null, 'uploads/')
   },
   filename: function (req, file, cb) {
-    cb(null, file.originalname); // ให้ไฟล์ถูกบันทึกด้วยชื่อเดิม
+    cb(null, file.fieldname + '-' + Date.now() + ".pdf")
   }
 });
 
-const upload = multer({
-  storage: storage,
-  limits: { fileSize: 10 * 1024 * 1024 } // 10 MB
-});
+const upload = multer({ storage: storage });
 
 config({ path: `${__dirname}/.env` });
 
@@ -953,7 +950,25 @@ app.get('/api/get-assessment-data', (req, res) => {
   });
 });
 
+app.post('/upload/', upload.single('pdfFile'), (req, res) => {
+  // const fileData = req.file.buffer; // ข้อมูลไฟล์ในรูปแบบ binary
+  const { extrapoint_id, first_name, last_name, clause, list, points, id_student } = req.body;
+  const upload_file_path = req.file.path;
 
+  const query = 'INSERT INTO Extrapoints (extrapoint_pdf, first_name, last_name, clause, list, points, id_student) VALUES (?, ?, ?, ?, ?, ?, ?)';
+
+  console.log(req.file); // แสดงข้อมูลของไฟล์ที่อัปโหลด
+  console.log(req.body); // แสดงข้อมูลอื่นๆ ที่ถูกส่งมากับคำขอ
+  db.query(query, [upload_file_path, first_name, last_name, clause, list, points, id_student], (err, result) => {
+    if (err) {
+      console.error('Error inserting file into database:', err);
+      res.status(500).json({ error: 'Internal Server Error' });
+      return;
+    }
+
+    res.json({ message: 'File uploaded successfully!' });
+  });
+});
 
 
 
