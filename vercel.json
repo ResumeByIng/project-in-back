@@ -15,7 +15,7 @@
     "crons": [
     {
       "path": "/api/delete/complaints",
-      "schedule": "37 15 * * *"
+      "schedule": "5 8 * * *"
     }
   ]
 }
