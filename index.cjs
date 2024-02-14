@@ -971,6 +971,14 @@ app.get("/file/:file_name", async (req, res) => {
   return await blob.text();
 });
 
+// สร้าง endpoint เพื่อดึงข้อมูลจากฐานข้อมูล
+app.get('/data_student', (req, res) => {
+  db.query('SELECT * FROM data_student', (error, results, fields) => {
+    if (error) throw error;
+    res.json(results);
+  });
+});
+
 
 
 
