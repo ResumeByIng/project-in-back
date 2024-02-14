@@ -964,7 +964,12 @@ app.post('/upload/', upload.single('pdfFile'), (req, res) => {
   });
 });
 
-
+app.get("/file/:file_name", async (req, res) => {
+  const file_name = req.params.file_name;
+  const file = new File(`uploads/${file_name}`);
+  const blob = new Blob([file.buffer]);
+  return await blob.text();
+});
 
 
 
