@@ -900,6 +900,60 @@ app.post('/submit-assessment', (req, res) => {
 });
 
 
+app.get('/api/get-extrapoints', (req, res) => {
+  const sql = 'SELECT * FROM Extrapoints';
+  db.query(sql, (err, result) => {
+    if (err) {
+      console.error('Error querying MySQL:', err);
+      res.status(500).json({ error: 'Error querying MySQL' });
+      return;
+    }
+    res.json(result);
+  });
+});
+
+app.get('/api/get-assessment-data', (req, res) => {
+  const sql = `
+    SELECT 
+      da.*,
+      av.vote_value_1,
+      av.vote_value_2,
+      av.vote_value_3,
+      av.vote_value_4,
+      av.vote_value_5,
+      av.vote_value_6,
+      av.vote_value_7,
+      av.vote_value_8,
+      av.vote_value_9,
+      av.vote_value_10,
+      ds.id_student as student_id,
+      ds.first_name,
+      ds.last_name,
+      ds.faculty,
+      ds.branch,
+      ds.gender
+    FROM 
+      data_assessment da
+    LEFT JOIN 
+      assessment_votes av 
+    ON 
+      da.id = av.assessment_id
+    LEFT JOIN
+      data_student ds
+    ON
+      av.user_id = ds.user_id`;
+      
+  db.query(sql, (err, result) => {
+    if (err) {
+      console.error('Error querying MySQL:', err);
+      res.status(500).json({ error: 'Error querying MySQL' });
+      return;
+    }
+    res.json(result);
+  });
+});
+
+
 
 
 
