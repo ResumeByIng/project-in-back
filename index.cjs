@@ -844,8 +844,18 @@ app.post('/submit-assessment', (req, res) => {
 
 
 app.get('/api/get-extrapoints', (req, res) => {
-  const sql = 'SELECT * FROM Extrapoints';
-  db.query(sql, (err, result) => {
+  const { student_id } = req.query; // รับ student_id จาก query parameters
+
+  let sql = 'SELECT * FROM Extrapoints';
+  const values = [];
+
+  // เพิ่มเงื่อนไข WHERE ถ้ามี student_id ถูกส่งมา
+  if (student_id) {
+    sql += ' WHERE student_id = ?'; // ตรวจสอบคอลัมน์ student_id
+    values.push(student_id);
+  }
+
+  db.query(sql, values, (err, result) => {
     if (err) {
       console.error('Error querying MySQL:', err);
       res.status(500).json({ error: 'Error querying MySQL' });
