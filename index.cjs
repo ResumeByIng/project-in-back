@@ -851,33 +851,31 @@ app.post('api/upload', upload.single('file'), (req, res) => {
   });
 });
 
-// Endpoint สำหรับรับข้อมูลจากหน้าบ้าน
 app.post('/submit-assessment', (req, res) => {
-  const assessmentData = req.body; // ข้อมูลที่ส่งมาจากหน้าบ้าน
+  const  assessmentData  = req.body; // ข้อมูลที่ส่งมาจากหน้าบ้าน
 
   const sql = `INSERT INTO assessment_votes (user_id, assessment_id, vote_value_1, vote_value_2, vote_value_3, vote_value_4, vote_value_5, vote_value_6, vote_value_7, vote_value_8, vote_value_9, vote_value_10) 
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
 
   // ดึง user_id จาก assessmentData (ถ้ามี)
-  const userId = assessmentData.user_id;
+  const userId = assessmentData[0].user_id;
 
   // สร้างค่าที่จะแทนที่ ? ในคำสั่ง SQL
   const values = [
     userId,
-    assessmentData.assessment_id,
-    assessmentData.vote_value_1,
-    assessmentData.vote_value_2,
-    assessmentData.vote_value_3,
-    assessmentData.vote_value_4,
-    assessmentData.vote_value_5,
-    assessmentData.vote_value_6,
-    assessmentData.vote_value_7,
-    assessmentData.vote_value_8,
-    assessmentData.vote_value_9,
-    assessmentData.vote_value_10
+    assessmentData[0].assessment_id,
+    assessmentData[0].vote_value_1|| 0,
+    assessmentData[0].vote_value_2|| 0,
+    assessmentData[0].vote_value_3|| 0,
+    assessmentData[0].vote_value_4|| 0,
+    assessmentData[0].vote_value_5|| 0,
+    assessmentData[0].vote_value_6 || 0,
+    assessmentData[0].vote_value_7 || 0,
+    assessmentData[0].vote_value_8 || 0,
+    assessmentData[0].vote_value_9 || 0,
+    assessmentData[0].vote_value_10 || 0
   ];
-
   // ส่งคำสั่ง SQL ไปยังฐานข้อมูล
   db.query(sql, values, (err, result) => {
     if (err) {
