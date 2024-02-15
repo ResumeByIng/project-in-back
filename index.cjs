@@ -1013,6 +1013,18 @@ app.put('/extrapoints/:extrapoint_id', async (req, res) => {
   }
 });
 
+app.get('/api/get-check-extrapoints', (req, res) => {
+  const sql = 'SELECT * FROM Extrapoints WHERE Check_id = 0'; // เพิ่ม WHERE Check_id = 0 เข้าไปในคำสั่ง SQL
+  db.query(sql, (err, result) => {
+    if (err) {
+      console.error('Error querying MySQL:', err);
+      res.status(500).json({ error: 'Error querying MySQL' });
+      return;
+    }
+    res.json(result);
+  });
+});
+
 
 
 
