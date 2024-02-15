@@ -844,15 +844,14 @@ app.post('/submit-assessment', (req, res) => {
 
 
 app.get('/api/get-extrapoints', (req, res) => {
-  const { student_id } = req.query; // รับ student_id จาก query parameters
+  const { id_student } = req.query;
 
   let sql = 'SELECT * FROM Extrapoints';
   const values = [];
 
-  // เพิ่มเงื่อนไข WHERE ถ้ามี student_id ถูกส่งมา
-  if (student_id) {
-    sql += ' WHERE id_student = ?'; // ตรวจสอบคอลัมน์ student_id
-    values.push(student_id);
+  if (id_student) {
+    sql += ' WHERE id_student = ?';
+    values.push(id_student);
   }
 
   db.query(sql, values, (err, result) => {
