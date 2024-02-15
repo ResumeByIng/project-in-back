@@ -993,6 +993,26 @@ app.post("/api/register", (req, res) => {
   });
 });
 
+app.put('/extrapoints/:extrapoint_id', async (req, res) => {
+  try {
+    const { extrapoint_id } = req.params;
+    const { Check_id } = req.body;
+
+    const sql = 'UPDATE Extrapoints SET Check_id = ? WHERE extrapoint_id = ?';
+    db.query(sql, [Check_id, extrapoint_id], (err, result) => {
+      if (err) {
+        console.error('Error updating Check_id:', err);
+        res.status(500).json({ message: 'Internal server error' });
+        return;
+      }
+      res.status(200).json({ message: 'Updated successfully' });
+    });
+  } catch (error) {
+    console.error('Error updating Check_id:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
 
 
 
