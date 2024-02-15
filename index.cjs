@@ -851,7 +851,7 @@ app.get('/api/get-extrapoints', (req, res) => {
 
   // เพิ่มเงื่อนไข WHERE ถ้ามี student_id ถูกส่งมา
   if (student_id) {
-    sql += ' WHERE student_id = ?'; // ตรวจสอบคอลัมน์ student_id
+    sql += ' WHERE id_student = ?'; // ตรวจสอบคอลัมน์ student_id
     values.push(student_id);
   }
 
