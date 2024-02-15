@@ -249,18 +249,18 @@ app.post('/api/save-extrapoints', upload.single('extrapoint_picture'), (req, res
   });
 });
 
-// app.get('/api/get-extrapoints', (req, res) => {
-//   const query = 'SELECT * FROM Extrapoints';
+app.get('/api/get-all-extrapoints', (req, res) => {
+  const query = 'SELECT * FROM Extrapoints';
 
-//   db.query(query, (error, results) => {
-//     if (error) {
-//       console.error('Error fetching extrapoints:', error);
-//       res.status(500).json({ message: 'Error fetching extrapoints' });
-//     } else {
-//       res.status(200).json(results);
-//     }
-//   });
-// });
+  db.query(query, (error, results) => {
+    if (error) {
+      console.error('Error fetching extrapoints:', error);
+      res.status(500).json({ message: 'Error fetching extrapoints' });
+    } else {
+      res.status(200).json(results);
+    }
+  });
+});
 
 // Endpoint เพื่ออัปเดตข้อมูลอาจารย์ในฐานข้อมูล
 app.put('/api/update-professor/:user_id', (req, res) => {
