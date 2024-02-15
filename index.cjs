@@ -931,7 +931,7 @@ app.get('/data_student', (req, res) => {
   });
 });
 
-app.post("/api/register", async (req, res) => {
+app.post("/api/register", (req, res) => {
   const {
     email,
     password,
@@ -944,74 +944,36 @@ app.post("/api/register", async (req, res) => {
     gender
   } = req.body;
 
-  try {
-    // เรียกใช้งาน endpoint สำหรับตรวจสอบ email ซ้ำ
-    const emailCheckResponse = await axios.post('https://project-in-back.vercel.app/api/check-email', { email });
-    const { exists } = emailCheckResponse.data;
-
-    if (exists) {
-      // ถ้า email ซ้ำในฐานข้อมูลแล้ว ส่งข้อความว่า email ซ้ำกลับไป
-      return res.status(400).json({ message: 'อีเมลนี้มีอยู่ในระบบแล้ว' });
+  const insertUserQuery = `
+    INSERT INTO username (email, password, role)
+    VALUES (?, ?, ?)
+  `;
+  
+  db.query(insertUserQuery, [email, password, 1], (error, userResult) => {
+    if (error) {
+      console.error('Error inserting user:', error);
+      return res.status(500).json({ message: 'Error registering user' });
     }
 
-    // ถ้า email ไม่ซ้ำในฐานข้อมูล ทำการลงทะเบียนผู้ใช้
-    const insertUserQuery = `
-      INSERT INTO username (email, password, role)
-      VALUES (?, ?, ?)
+    const userId = userResult.insertId;
+
+    const insertStudentQuery = `
+      INSERT INTO data_student (user_id, first_name, last_name, id_student, faculty, branch, class_year, gender)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `;
-
-    db.query(insertUserQuery, [email, password, 1], (error, userResult) => {
-      if (error) {
-        console.error('Error inserting user:', error);
-        return res.status(500).json({ message: 'Error registering user' });
-      }
-
-      const userId = userResult.insertId;
-
-      const insertStudentQuery = `
-        INSERT INTO data_student (user_id, first_name, last_name, id_student, faculty, branch, class_year, gender)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-      `;
-
-      db.query(
-        insertStudentQuery,
-        [userId, firstName, lastName, studentId, faculty, branch, classYear, gender],
-        (error, studentResult) => {
-          if (error) {
-            console.error('Error inserting student data:', error);
-            return res.status(500).json({ message: 'Error registering user' });
-          }
-
-          return res.status(200).json({ message: 'User registered successfully' });
+    
+    db.query(
+      insertStudentQuery,
+      [userId, firstName, lastName, studentId, faculty, branch, classYear, gender],
+      (error, studentResult) => {
+        if (error) {
+          console.error('Error inserting student data:', error);
+          return res.status(500).json({ message: 'Error registering user' });
         }
-      );
-    });
-  } catch (error) {
-    console.error('Error checking email:', error);
-    return res.status(500).json({ message: 'Error checking email' });
-  }
-});
 
-app.post('/check-email', (req, res) => {
-  const email = req.body.email;
-
-  // สร้างคำสั่ง SQL เพื่อตรวจสอบอีเมลในฐานข้อมูล
-  const sql = `SELECT COUNT(*) AS email_count FROM users WHERE email = ?`;
-
-  // ประมวลผลคำสั่ง SQL
-  db.query(sql, [email], (err, result) => {
-    if (err) {
-      console.error(err);
-      res.status(500).json({ message: 'เกิดข้อผิดพลาดในการติดต่อกับฐานข้อมูล' });
-    } else {
-      const emailCount = result[0].email_count;
-      // ตรวจสอบว่ามีอีเมลในฐานข้อมูลหรือไม่
-      if (emailCount > 0) {
-        res.status(200).json({ exists: true, message: 'อีเมลนี้มีอยู่ในระบบ' });
-      } else {
-        res.status(200).json({ exists: false, message: 'อีเมลนี้ยังไม่มีในระบบ' });
+        return res.status(200).json({ message: 'User registered successfully' });
       }
-    }
+    );
   });
 });
 
