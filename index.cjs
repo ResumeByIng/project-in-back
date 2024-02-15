@@ -1034,6 +1034,30 @@ app.get('/api/get-check-extrapoints', (req, res) => {
   });
 });
 
+app.get('/api/get-sum-points', (req, res) => {
+  const query = `
+    SELECT
+      id_student,
+      CONCAT(first_name, ' ', last_name) AS full_name,
+      SUM(points) AS sum_points
+    FROM
+      Extrapoints
+    WHERE
+      Check_id = 1
+    GROUP BY
+      id_student;
+  `;
+
+  db.query(query, (error, results) => {
+    if (error) {
+      console.error('Error fetching sum of points:', error);
+      res.status(500).json({ message: 'Error fetching sum of points' });
+    } else {
+      res.status(200).json(results);
+    }
+  });
+});
+
 
 
 
