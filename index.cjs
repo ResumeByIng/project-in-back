@@ -1005,10 +1005,10 @@ app.post("/api/register", (req, res) => {
 app.put('/extrapoints/:extrapoint_id', async (req, res) => {
   try {
     const { extrapoint_id } = req.params;
-    const { Check_id } = req.body;
+    const { Check_id, professor_check } = req.body; // เพิ่ม professor_check ในการรับข้อมูลจาก body
 
-    const sql = 'UPDATE Extrapoints SET Check_id = ? WHERE extrapoint_id = ?';
-    db.query(sql, [Check_id, extrapoint_id], (err, result) => {
+    const sql = 'UPDATE Extrapoints SET Check_id = ?, professor_check = ? WHERE extrapoint_id = ?'; // เพิ่ม professor_check ในคำสั่ง SQL
+    db.query(sql, [Check_id, professor_check, extrapoint_id], (err, result) => {
       if (err) {
         console.error('Error updating Check_id:', err);
         res.status(500).json({ message: 'Internal server error' });
