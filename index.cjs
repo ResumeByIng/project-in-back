@@ -219,7 +219,7 @@ app.delete('/api/delete-news/:newsId', (req, res) => {
   });
 });
 
-app.post("/api/register", (req, res) => {
+app.post("/api/register", async (req, res) => {
   const {
     email,
     password,
@@ -232,37 +232,52 @@ app.post("/api/register", (req, res) => {
     gender
   } = req.body;
 
-  const insertUserQuery = `
-    INSERT INTO username (email, password, role)
-    VALUES (?, ?, ?)
-  `;
-  
-  db.query(insertUserQuery, [email, password, 1], (error, userResult) => {
-    if (error) {
-      console.error('Error inserting user:', error);
-      return res.status(500).json({ message: 'Error registering user' });
+  try {
+    // เรียกใช้งาน endpoint สำหรับตรวจสอบ email ซ้ำ
+    const emailCheckResponse = await axios.post('https://project-in-back.vercel.app/api/check-email', { email });
+    const { exists } = emailCheckResponse.data;
+
+    if (exists) {
+      // ถ้า email ซ้ำในฐานข้อมูลแล้ว ส่งข้อความว่า email ซ้ำกลับไป
+      return res.status(400).json({ message: 'อีเมลนี้มีอยู่ในระบบแล้ว' });
     }
 
-    const userId = userResult.insertId;
-
-    const insertStudentQuery = `
-      INSERT INTO data_student (user_id, first_name, last_name, id_student, faculty, branch, class_year, gender)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    // ถ้า email ไม่ซ้ำในฐานข้อมูล ทำการลงทะเบียนผู้ใช้
+    const insertUserQuery = `
+      INSERT INTO username (email, password, role)
+      VALUES (?, ?, ?)
     `;
-    
-    db.query(
-      insertStudentQuery,
-      [userId, firstName, lastName, studentId, faculty, branch, classYear, gender],
-      (error, studentResult) => {
-        if (error) {
-          console.error('Error inserting student data:', error);
-          return res.status(500).json({ message: 'Error registering user' });
-        }
 
-        return res.status(200).json({ message: 'User registered successfully' });
+    db.query(insertUserQuery, [email, password, 1], (error, userResult) => {
+      if (error) {
+        console.error('Error inserting user:', error);
+        return res.status(500).json({ message: 'Error registering user' });
       }
-    );
-  });
+
+      const userId = userResult.insertId;
+
+      const insertStudentQuery = `
+        INSERT INTO data_student (user_id, first_name, last_name, id_student, faculty, branch, class_year, gender)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `;
+
+      db.query(
+        insertStudentQuery,
+        [userId, firstName, lastName, studentId, faculty, branch, classYear, gender],
+        (error, studentResult) => {
+          if (error) {
+            console.error('Error inserting student data:', error);
+            return res.status(500).json({ message: 'Error registering user' });
+          }
+
+          return res.status(200).json({ message: 'User registered successfully' });
+        }
+      );
+    });
+  } catch (error) {
+    console.error('Error checking email:', error);
+    return res.status(500).json({ message: 'Error checking email' });
+  }
 });
 
 app.post('/api/save-extrapoints', upload.single('extrapoint_picture'), (req, res) => {
