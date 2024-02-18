@@ -1,24 +1,26 @@
 const express = require('express');
-const { createConnection } = require('mysql');
+const { createConnection } = require('mysql2');
 const cors = require('cors');
 const speakeasy = require('speakeasy');
 const moment = require('moment-timezone');
 const axios = require('axios');
+const path = require('path');
 const { config } = require('dotenv');;
+const cloudinary = require("./config.js");
 config({ path: `${__dirname}/.env` });
 
 const multer = require('multer');
 
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/')
-  },
-  filename: function (req, file, cb) {
-    cb(null, file.fieldname + '-' + Date.now() + ".pdf")
-  }
-});
+// const storage = multer.diskStorage({
+//   destination: function (req, file, cb) {
+//     cb(null, 'uploads/')
+//   },
+//   filename: function (req, file, cb) {
+//     cb(null, file.fieldname + '-' + Date.now() + ".pdf")
+//   }
+// });
 
-const upload = multer({ storage: storage });
+// const upload = multer({ storage: storage });
 
 config({ path: `${__dirname}/.env` });
 
@@ -31,10 +33,57 @@ app.use(cors());
 const db = createConnection({
   user: process.env.DB_USER,
   host: process.env.DB_HOST,
+  port: 3307,
   password: process.env.DB_PASS,
   database: process.env.DB_DATABASE,
+  insecureAuth: true
 });
 
+const storage = multer.diskStorage({
+
+	filename: function (req, file, cb) {
+	  cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
+	}, 
+  });
+  
+const upload = multer({ storage: storage ,   limits: { fileSize: 20 * 1024 * 1024 } });
+
+app.post('/upload', upload.single('image'), async (req, res) => {
+  let data;
+	if (!req.file) {
+	  return res.status(400).send({ message: 'No file uploaded.', status: 400 });
+	}
+	const uploadOptions = {
+		transformation: [{ width: 800, height: 600, crop: 'limit' }],
+	  };
+  
+
+	cloudinary.uploader.upload(req.file.path,uploadOptions, (error, result) => {
+	  if (error) {
+		console.error(error);
+		return res.status(500).json({ success: false, message: 'Error uploading image.' });
+	  }
+    const { first_name, last_name, clause, list, points, id_student, imageFile } = req.body;
+
+    const query = 'INSERT INTO Extrapoints (extrapoint_image, first_name, last_name, clause, list, points, id_student) VALUES (?, ?, ?, ?, ?, ?, ?)';
+  
+    console.log('imageFile -> ', imageFile); // แสดงข้อมูลของไฟล์ที่อัปโหลด
+    console.log('body -> ', req.body); // แสดงข้อมูลอื่นๆ ที่ถูกส่งมากับคำขอ
+    db.query(query, [result.secure_url, first_name, last_name, clause, list, points, id_student], (err, result) => {
+      if (err) {
+        console.error('Error inserting file into database:', err);
+        res.status(500).json({ error: 'Internal Server Error' });
+        return;
+      }
+  
+      return res.json({ message: 'File uploaded successfully!' });
+    });
+	})
+
+
+
+  
+  });
 
 app.get('/api/data', (req, res) => {
   const sql = 'SELECT * FROM username';
@@ -906,23 +955,23 @@ app.get('/api/get-assessment-data', (req, res) => {
 });
 
 
-app.post('/upload/', upload.single('imageFile'), (req, res) => {
-  const { extrapoint_id, first_name, last_name, clause, list, points, id_student, imageFile } = req.body;
+// app.post('/upload/', upload.single('imageFile'), (req, res) => {
+//   const { extrapoint_id, first_name, last_name, clause, list, points, id_student, imageFile } = req.body;
 
-  const query = 'INSERT INTO Extrapoints (extrapoint_pdf, first_name, last_name, clause, list, points, id_student) VALUES (?, ?, ?, ?, ?, ?, ?)';
+//   const query = 'INSERT INTO Extrapoints (extrapoint_pdf, first_name, last_name, clause, list, points, id_student) VALUES (?, ?, ?, ?, ?, ?, ?)';
 
-  console.log('imageFile -> ', imageFile); // แสดงข้อมูลของไฟล์ที่อัปโหลด
-  console.log('body -> ', req.body); // แสดงข้อมูลอื่นๆ ที่ถูกส่งมากับคำขอ
-  db.query(query, [imageFile, first_name, last_name, clause, list, points, id_student], (err, result) => {
-    if (err) {
-      console.error('Error inserting file into database:', err);
-      res.status(500).json({ error: 'Internal Server Error' });
-      return;
-    }
+//   console.log('imageFile -> ', imageFile); // แสดงข้อมูลของไฟล์ที่อัปโหลด
+//   console.log('body -> ', req.body); // แสดงข้อมูลอื่นๆ ที่ถูกส่งมากับคำขอ
+//   db.query(query, [imageFile, first_name, last_name, clause, list, points, id_student], (err, result) => {
+//     if (err) {
+//       console.error('Error inserting file into database:', err);
+//       res.status(500).json({ error: 'Internal Server Error' });
+//       return;
+//     }
 
-    res.json({ message: 'File uploaded successfully!' });
-  });
-});
+//     res.json({ message: 'File uploaded successfully!' });
+//   });
+// });
 
 app.get('/t', (_,res) => res.json({}));
 
@@ -1058,7 +1107,9 @@ app.get('/api/get-sum-points', (req, res) => {
   });
 });
 
-
+// app.listen(8081, () => {
+//   console.log(`Server is running on port ${8081}`);
+// });
 
 
 
