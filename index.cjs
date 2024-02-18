@@ -1,5 +1,5 @@
 const express = require('express');
-const { createConnection } = require('mysql2');
+const { createConnection } = require('mysql');
 const cors = require('cors');
 const speakeasy = require('speakeasy');
 const moment = require('moment-timezone');
@@ -33,7 +33,6 @@ app.use(cors());
 const db = createConnection({
   user: process.env.DB_USER,
   host: process.env.DB_HOST,
-  port: 3307,
   password: process.env.DB_PASS,
   database: process.env.DB_DATABASE,
   insecureAuth: true
@@ -1107,9 +1106,9 @@ app.get('/api/get-sum-points', (req, res) => {
   });
 });
 
-// app.listen(8081, () => {
-//   console.log(`Server is running on port ${8081}`);
-// });
+app.listen(8081, () => {
+  console.log(`Server is running on port ${8081}`);
+});
 
 
 
