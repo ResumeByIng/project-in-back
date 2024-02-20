@@ -2,11 +2,10 @@ const express = require('express');
 const { createConnection } = require('mysql');
 const cors = require('cors');
 const speakeasy = require('speakeasy');
-const moment = require('moment-timezone');
-const axios = require('axios');
 const path = require('path');
 const { config } = require('dotenv');;
 const cloudinary = require("./config.js");
+
 config({ path: `${__dirname}/.env` });
 
 const multer = require('multer');
@@ -36,6 +35,10 @@ const db = createConnection({
   password: process.env.DB_PASS,
   database: process.env.DB_DATABASE,
   insecureAuth: true
+});
+
+app.listen(8081, () => {
+  console.log(`Server is running on port ${8081}`);
 });
 
 const storage = multer.diskStorage({
@@ -457,7 +460,7 @@ app.post('/generate-otp', (req, res) => {
 
   // ข้อความอีเมล
   const mailOptions = {
-    from: 's62122519025@ssru.ac.th', // อีเมลของคุณ
+    from: 's62122519010@ssru.ac.th', // อีเมลของคุณ
     to: req.body.email, // อีเมลผู้รับ
     subject: 'การยืนยันตัวตนในระบบประกันคุณภาพ', // หัวข้ออีเมล
     textBody: `เราขอยืนยันตัวตนของคุณในระบบประกันคุณภาพด้วยรหัส OTP ดังนี้: ${otp}\nกรุณาใส่รหัส OTP นี้ในแอปพลิเคชันของคุณเพื่อยืนยันตัวตน\n\nขอแสดงความนับถือ\nทีมงานระบบประกันคุณภาพ`, // เนื้อหาข้อความ
@@ -500,7 +503,7 @@ app.post('/reset-otp', (req, res) => {
   });
 
   const mailOptions = {
-    from: 's62122519025@ssru.ac.th', // อีเมลของคุณ
+    from: 's62122519010@ssru.ac.th', // อีเมลของคุณ
     to: req.body.email, // อีเมลผู้รับ
     subject: 'การยืนยันตัวตนในระบบประกันคุณภาพ', // หัวข้ออีเมล
     textBody: `สวัสดีคุณ ${req.body.email},\n\nเราขอยืนยันตัวตนของคุณในระบบประกันคุณภาพด้วยรหัส OTP ดังนี้: ${otp}\nกรุณาใส่รหัส OTP นี้ในแอปพลิเคชันของคุณเพื่อยืนยันตัวตน\n\nขอแสดงความนับถือ,\nทีมงานระบบประกันคุณภาพ`, // เนื้อหาข้อความ
@@ -1106,10 +1109,151 @@ app.get('/api/get-sum-points', (req, res) => {
   });
 });
 
-app.listen(8081, () => {
-  console.log(`Server is running on port ${8081}`);
+app.put('/api/update-user-data', (req, res) => {
+  const userData = req.body;
+  const userId = userData.user_id;
+
+  const sqlStudent = `UPDATE data_student SET 
+      first_name = ?, 
+      last_name = ?, 
+      id_student = ?, 
+      faculty = ?, 
+      branch = ?, 
+      class_year = ?, 
+      gender = ?
+      WHERE user_id = ?`;
+
+  const sqlGraduate = `UPDATE data_graduate SET 
+      first_name = ?, 
+      last_name = ?, 
+      id_graduate = ?, 
+      faculty = ?, 
+      branch = ?, 
+      class_year = ?, 
+      gender = ?
+      WHERE user_id = ?`;
+
+  db.query(sqlStudent, [
+      userData.first_name,
+      userData.last_name,
+      userData.id_student,
+      userData.faculty,
+      userData.branch,
+      userData.class_year,
+      userData.gender,
+      userId
+  ], (errStudent, resultStudent) => {
+      if (errStudent) {
+          console.error('Error updating student data:', errStudent);
+          res.status(500).json({ error: 'Failed to update student data' });
+          return;
+      }
+
+      db.query(sqlGraduate, [
+          userData.first_name,
+          userData.last_name,
+          userData.id_graduate,
+          userData.faculty,
+          userData.branch,
+          userData.class_year,
+          userData.gender,
+          userId
+      ], (errGraduate, resultGraduate) => {
+          if (errGraduate) {
+              console.error('Error updating graduate data:', errGraduate);
+              res.status(500).json({ error: 'Failed to update graduate data' });
+              return;
+          }
+
+          console.log('User data updated successfully');
+          res.status(200).json({ message: 'User data updated successfully' });
+      });
+  });
 });
 
+app.post("/forgot-password", async (req, res) => {
+  const { email } = req.body;
+  try {
+    const oldUser = await User.findOne({ email });
+    if (!oldUser) {
+      return res.json({ status: "User Not Exists!!" });
+    }
+    const secret = JWT_SECRET + oldUser.password;
+    const token = jwt.sign({ email: oldUser.email, id: oldUser._id }, secret, {
+      expiresIn: "5m",
+    });
+    const link = `http://localhost:8081/reset-password/${oldUser._id}/${token}`;
+    var transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: "adarsh438tcsckandivali@gmail.com",
+        pass: "rmdklolcsmswvyfw",
+      },
+    });
 
+    var mailOptions = {
+      from: "youremail@gmail.com",
+      to: "thedebugarena@gmail.com",
+      subject: "Password Reset",
+      text: link,
+    };
+
+    transporter.sendMail(mailOptions, function (error, info) {
+      if (error) {
+        console.log(error);
+      } else {
+        console.log("Email sent: " + info.response);
+      }
+    });
+    console.log(link);
+  } catch (error) { }
+});
+
+app.get("/reset-password/:id/:token", async (req, res) => {
+  const { id, token } = req.params;
+  console.log(req.params);
+  const oldUser = await User.findOne({ _id: id });
+  if (!oldUser) {
+    return res.json({ status: "User Not Exists!!" });
+  }
+  const secret = JWT_SECRET + oldUser.password;
+  try {
+    const verify = jwt.verify(token, secret);
+    res.render("index", { email: verify.email, status: "Not Verified" });
+  } catch (error) {
+    console.log(error);
+    res.send("Not Verified");
+  }
+});
+
+app.post("/reset-password/:id/:token", async (req, res) => {
+  const { id, token } = req.params;
+  const { password } = req.body;
+
+  const oldUser = await User.findOne({ _id: id });
+  if (!oldUser) {
+    return res.json({ status: "User Not Exists!!" });
+  }
+  const secret = JWT_SECRET + oldUser.password;
+  try {
+    const verify = jwt.verify(token, secret);
+    const encryptedPassword = await bcrypt.hash(password, 10);
+    await User.updateOne(
+      {
+        _id: id,
+      },
+      {
+        $set: {
+          password: encryptedPassword,
+        },
+      }
+    );
+
+    res.render("index", { email: verify.email, status: "verified" });
+  } catch (error) {
+    console.log(error);
+    res.json({ status: "Something Went Wrong" });
+  }
+});
 
 module.exports = app;
